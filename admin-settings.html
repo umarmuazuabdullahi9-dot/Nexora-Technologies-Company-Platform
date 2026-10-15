@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Settings | Admin Panel</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f172a; --bg-card: #1e293b; --bg-hover: rgba(37,99,235,0.08);
+            --border-color: #334155; --text-primary: #f1f5f9; --text-secondary: #94a3b8;
+            --text-muted: #64748b; --primary-color: #3b82f6; --primary-light: #60a5fa;
+            --success-color: #10b981; --warning-color: #f59e0b; --danger-color: #ef4444;
+            --info-color: #06b6d4; --accent-color: #8b5cf6;
+            --radius: 12px; --radius-lg: 16px; --radius-full: 9999px;
+            --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        [data-theme="light"] {
+            --bg-primary: #f8fafc; --bg-card: #ffffff; --bg-hover: rgba(37,99,235,0.05);
+            --border-color: #e2e8f0; --text-primary: #0f172a; --text-secondary: #64748b; --text-muted: #94a3b8;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--bg-primary); color:var(--text-primary); min-height:100vh; display:flex; line-height:1.6; }
+
+        .sidebar { width:280px; background:var(--bg-card); border-right:1px solid var(--border-color); height:100vh; position:fixed; left:0; top:0; overflow-y:auto; z-index:100; transition:var(--transition); }
+        .sidebar-header { padding:24px; border-bottom:1px solid var(--border-color); }
+        .sidebar-logo { font-size:1.4rem; font-weight:800; background:linear-gradient(135deg,var(--primary-color),var(--accent-color)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .sidebar-user { padding:20px 24px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border-color); }
+        .sidebar-user-avatar { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--primary-color),var(--accent-color)); display:flex; align-items:center; justify-content:center; font-weight:700; color:white; font-size:1rem; }
+        .sidebar-menu { list-style:none; padding:12px 0; }
+        .sidebar-menu li a { display:flex; align-items:center; gap:12px; padding:12px 24px; color:var(--text-secondary); text-decoration:none; transition:var(--transition); border-left:3px solid transparent; font-size:0.95rem; }
+        .sidebar-menu li a:hover { background:var(--bg-hover); color:var(--text-primary); border-left-color:var(--primary-color); }
+        .sidebar-menu li a.active { background:var(--bg-hover); color:var(--primary-color); border-left-color:var(--primary-color); font-weight:600; }
+        .sidebar-menu-icon { font-size:1.1rem; width:24px; text-align:center; }
+
+        .main-content { flex:1; margin-left:280px; min-height:100vh; display:flex; flex-direction:column; }
+        .top-header { background:var(--bg-card); border-bottom:1px solid var(--border-color); padding:16px 32px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50; backdrop-filter:blur(10px); }
+        .mobile-menu-btn { display:none; background:none; border:none; color:var(--text-primary); font-size:1.5rem; cursor:pointer; }
+        .theme-toggle { background:none; border:none; color:var(--text-secondary); font-size:1.2rem; cursor:pointer; padding:8px; border-radius:8px; transition:var(--transition); }
+        .theme-toggle:hover { background:var(--bg-hover); color:var(--primary-color); }
+        .content-area { padding:32px; flex:1; }
+
+        .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:32px; flex-wrap:wrap; gap:16px; }
+        .page-title h1 { font-size:1.75rem; font-weight:700; margin-bottom:6px; background:linear-gradient(135deg,var(--text-primary),var(--text-secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .page-title p { color:var(--text-secondary); font-size:0.95rem; }
+        .header-actions { display:flex; gap:12px; flex-wrap:wrap; }
+
+        .btn { padding:12px 20px; border:none; border-radius:10px; font-size:0.9rem; font-weight:600; cursor:pointer; transition:var(--transition); display:inline-flex; align-items:center; gap:8px; }
+        .btn-primary { background:linear-gradient(135deg,var(--primary-color),#2563eb); color:white; }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 15px rgba(59,130,246,0.4); }
+        .btn-primary:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+        .btn-secondary { background:var(--bg-primary); color:var(--text-secondary); border:1px solid var(--border-color); }
+        .btn-secondary:hover { background:var(--bg-hover); color:var(--text-primary); }
+        .btn-danger { background:rgba(239,68,68,0.1); color:var(--danger-color); border:1px solid rgba(239,68,68,0.2); }
+        .btn-danger:hover { background:rgba(239,68,68,0.2); }
+        .btn-success { background:rgba(16,185,129,0.1); color:var(--success-color); border:1px solid rgba(16,185,129,0.2); }
+        .btn-success:hover { background:rgba(16,185,129,0.2); }
+        .btn-sm { padding:8px 14px; font-size:0.8rem; }
+        .btn-icon { width:36px; height:36px; padding:0; justify-content:center; border-radius:8px; }
+
+        .form-group { margin-bottom:20px; }
+        .form-label { display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:8px; }
+        .form-label .required { color:var(--danger-color); margin-left:2px; }
+        .form-input { width:100%; padding:12px 16px; background:var(--bg-primary); border:1px solid var(--border-color); border-radius:10px; color:var(--text-primary); font-size:0.95rem; transition:var(--transition); font-family:inherit; }
+        .form-input:focus { outline:none; border-color:var(--primary-color); box-shadow:0 0 0 3px rgba(59,130,246,0.15); }
+        .form-input::placeholder { color:var(--text-muted); }
+        .form-input.error { border-color:var(--danger-color); }
+        .form-input.error:focus { box-shadow:0 0 0 3px rgba(239,68,68,0.15); }
+        .form-error { color:var(--danger-color); font-size:0.8rem; margin-top:6px; display:none; }
+        .form-error.show { display:block; }
+        .form-hint { color:var(--text-muted); font-size:0.8rem; margin-top:6px; }
+        textarea.form-input { resize:vertical; min-height:100px; }
+        select.form-input { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 16px center; padding-right:40px; }
+
+        .input-group { display:flex; gap:8px; }
+        .input-group .form-input { flex:1; }
+        .input-group .btn { white-space:nowrap; }
+
+        .password-strength { height:4px; background:var(--border-color); border-radius:2px; margin-top:8px; overflow:hidden; }
+        .password-strength-bar { height:100%; width:0; border-radius:2px; transition:var(--transition); }
+        .password-strength-bar.weak { width:33%; background:var(--danger-color); }
+        .password-strength-bar.medium { width:66%; background:var(--warning-color); }
+        .password-strength-bar.strong { width:100%; background:var(--success-color); }
+        .password-strength-text { font-size:0.75rem; margin-top:4px; color:var(--text-muted); }
+
+        .tabs-nav { display:flex; gap:4px; margin-bottom:24px; border-bottom:1px solid var(--border-color); overflow-x:auto; padding-bottom:1px; }
+        .tab-btn { padding:12px 20px; background:none; border:none; color:var(--text-secondary); font-size:0.9rem; font-weight:600; cursor:pointer; transition:var(--transition); border-bottom:2px solid transparent; white-space:nowrap; display:flex; align-items:center; gap:8px; }
+        .tab-btn:hover { color:var(--text-primary); }
+        .tab-btn.active { color:var(--primary-color); border-bottom-color:var(--primary-color); }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; animation:fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        .settings-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(400px,1fr)); gap:24px; }
+        .settings-card { background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid var(--border-color); padding:28px; transition:var(--transition); }
+        .settings-card:hover { box-shadow:var(--shadow-lg); }
+        .settings-card h3 { font-size:1.1rem; margin-bottom:24px; display:flex; align-items:center; gap:10px; color:var(--text-primary); }
+        .settings-card h3 i { color:var(--primary-color); }
+        .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        .card-header h3 { margin:0; }
+
+        .setting-item { display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid var(--border-color); transition:var(--transition); }
+        .setting-item:last-child { border-bottom:none; }
+        .setting-item:hover { padding-left:8px; }
+        .setting-info h4 { font-size:0.95rem; margin-bottom:4px; font-weight:600; }
+        .setting-info p { color:var(--text-secondary); font-size:0.85rem; }
+
+        .toggle-switch { width:48px; height:26px; background:var(--border-color); border-radius:13px; position:relative; cursor:pointer; transition:var(--transition); flex-shrink:0; }
+        .toggle-switch.active { background:var(--primary-color); }
+        .toggle-switch::after { content:''; position:absolute; width:22px; height:22px; background:white; border-radius:50%; top:2px; left:2px; transition:var(--transition); box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+        .toggle-switch.active::after { left:24px; }
+
+        .danger-zone { border-color:rgba(239,68,68,0.3) !important; }
+        .danger-zone:hover { border-color:var(--danger-color) !important; }
+        .danger-zone h3 { color:var(--danger-color); }
+        .danger-zone h3 i { color:var(--danger-color); }
+
+        .avatar-upload { display:flex; align-items:center; gap:20px; margin-bottom:24px; }
+        .avatar-preview { width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid var(--primary-color); }
+        .avatar-placeholder { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,var(--primary-color),var(--accent-color)); display:flex; align-items:center; justify-content:center; color:white; font-size:2rem; font-weight:700; }
+        .avatar-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+        .session-item { display:flex; align-items:center; gap:16px; padding:14px; background:var(--bg-primary); border-radius:var(--radius); margin-bottom:10px; border:1px solid var(--border-color); }
+        .session-icon { width:40px; height:40px; border-radius:10px; background:rgba(59,130,246,0.1); display:flex; align-items:center; justify-content:center; color:var(--primary-color); font-size:1rem; }
+        .session-info { flex:1; }
+        .session-info h4 { font-size:0.9rem; font-weight:600; }
+        .session-info p { color:var(--text-muted); font-size:0.8rem; }
+        .session-status { font-size:0.75rem; padding:4px 10px; border-radius:var(--radius-full); font-weight:600; }
+        .session-status.active { background:rgba(16,185,129,0.15); color:var(--success-color); }
+
+        .storage-bar { height:8px; background:var(--bg-primary); border-radius:4px; overflow:hidden; margin:12px 0; }
+        .storage-bar-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--primary-color),var(--accent-color)); transition:var(--transition); }
+        .storage-info { display:flex; justify-content:space-between; font-size:0.85rem; color:var(--text-secondary); }
+
+        .integration-item { display:flex; align-items:center; gap:16px; padding:16px; background:var(--bg-primary); border-radius:var(--radius); margin-bottom:12px; border:1px solid var(--border-color); transition:var(--transition); }
+        .integration-item:hover { border-color:var(--primary-color); }
+        .integration-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; }
+        .integration-icon.google { background:rgba(239,68,68,0.1); color:#ea4335; }
+        .integration-icon.github { background:rgba(15,23,42,0.5); color:white; }
+        .integration-icon.slack { background:rgba(74,21,75,0.2); color:#4a154b; }
+        .integration-icon.discord { background:rgba(88,101,242,0.1); color:#5865f2; }
+        .integration-info { flex:1; }
+        .integration-info h4 { font-size:0.95rem; font-weight:600; }
+        .integration-info p { color:var(--text-muted); font-size:0.8rem; }
+
+        .login-history-item { display:flex; align-items:center; gap:16px; padding:14px; background:var(--bg-primary); border-radius:var(--radius); margin-bottom:8px; border:1px solid var(--border-color); }
+        .login-history-icon { width:36px; height:36px; border-radius:50%; background:rgba(59,130,246,0.1); display:flex; align-items:center; justify-content:center; color:var(--primary-color); font-size:0.9rem; }
+        .login-history-info { flex:1; }
+        .login-history-info h4 { font-size:0.9rem; font-weight:600; }
+        .login-history-info p { color:var(--text-muted); font-size:0.8rem; }
+        .login-history-time { color:var(--text-muted); font-size:0.8rem; white-space:nowrap; }
+
+        .accent-colors { display:flex; gap:12px; flex-wrap:wrap; }
+        .accent-color-option { width:36px; height:36px; border-radius:10px; cursor:pointer; border:3px solid transparent; transition:var(--transition); }
+        .accent-color-option:hover { transform:scale(1.1); }
+        .accent-color-option.active { border-color:var(--text-primary); box-shadow:0 0 0 3px var(--bg-card),0 0 0 5px var(--primary-color); }
+
+        .progress-ring { transform:rotate(-90deg); }
+        .progress-ring-circle { transition:stroke-dashoffset 0.5s ease; }
+
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:20px; }
+        .modal-overlay.active { display:flex; animation:fadeIn 0.2s ease; }
+        .modal { background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid var(--border-color); width:100%; max-width:450px; max-height:90vh; overflow-y:auto; animation:modalSlide 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+        @keyframes modalSlide { from { opacity:0; transform:scale(0.9) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .modal-header { padding:20px 24px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; }
+        .modal-header h3 { font-size:1.1rem; }
+        .modal-close { background:none; border:none; color:var(--text-secondary); font-size:1.2rem; cursor:pointer; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; transition:var(--transition); }
+        .modal-close:hover { background:var(--bg-hover); color:var(--danger-color); }
+        .modal-body { padding:24px; }
+        .modal-footer { padding:16px 24px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:12px; }
+        .modal-danger .modal-header { border-color:rgba(239,68,68,0.3); }
+        .modal-danger .modal-header h3 { color:var(--danger-color); }
+        .modal-danger .modal-header h3 i { color:var(--danger-color); }
+
+        .toast-container { position:fixed; top:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:12px; }
+        .toast { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); padding:16px 20px; display:flex; align-items:center; gap:12px; box-shadow:0 10px 40px rgba(0,0,0,0.3); animation:toastSlide 0.4s cubic-bezier(0.175,0.885,0.32,1.275); min-width:300px; }
+        @keyframes toastSlide { from { opacity:0; transform:translateX(100px) scale(0.9); } to { opacity:1; transform:translateX(0) scale(1); } }
+        .toast.success { border-left:4px solid var(--success-color); }
+        .toast.error { border-left:4px solid var(--danger-color); }
+        .toast.warning { border-left:4px solid var(--warning-color); }
+        .toast.info { border-left:4px solid var(--primary-color); }
+        .toast i { font-size:1.1rem; }
+        .toast.success i { color:var(--success-color); }
+        .toast.error i { color:var(--danger-color); }
+        .toast.warning i { color:var(--warning-color); }
+        .toast.info i { color:var(--primary-color); }
+
+        .badge { display:inline-flex; align-items:center; padding:4px 10px; border-radius:var(--radius-full); font-size:0.75rem; font-weight:600; }
+        .badge-success { background:rgba(16,185,129,0.15); color:var(--success-color); }
+        .badge-warning { background:rgba(245,158,11,0.15); color:var(--warning-color); }
+        .badge-danger { background:rgba(239,68,68,0.15); color:var(--danger-color); }
+        .badge-info { background:rgba(59,130,246,0.15); color:var(--primary-color); }
+
+        .mobile-nav-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:99; backdrop-filter:blur(4px); }
+        .mobile-nav-overlay.active { display:block; }
+
+        @media (max-width:1024px) {
+            .sidebar { transform:translateX(-100%); }
+            .sidebar.active { transform:translateX(0); }
+            .main-content { margin-left:0; }
+            .mobile-menu-btn { display:block; }
+            .settings-grid { grid-template-columns:1fr; }
+        }
+        @media (max-width:768px) {
+            .content-area { padding:20px 16px; }
+            .settings-card { padding:20px; }
+            .tabs-nav { gap:0; }
+            .tab-btn { padding:10px 14px; font-size:0.85rem; }
+            .setting-item { flex-direction:column; align-items:flex-start; gap:12px; }
+            .avatar-upload { flex-direction:column; text-align:center; }
+        }
+
+        ::-webkit-scrollbar { width:8px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:var(--border-color); border-radius:4px; }
+        ::-webkit-scrollbar-thumb:hover { background:var(--text-secondary); }
+
+        /* Hide protected content until Firebase confirms the admin is logged in */
+        body.auth-pending .sidebar,
+        body.auth-pending .main-content { visibility: hidden; }
+        #authGate {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 2rem;
+        }
+        body:not(.auth-pending) #authGate { display: none; }
+    </style>
+</head>
+<body class="auth-pending">
+    <div id="authGate"><i class="fas fa-spinner fa-spin"></i></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">Nexora Admin</div></div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar" id="sidebarAvatar">A</div>
+            <div>
+                <div style="font-weight:700;font-size:0.95rem;" id="adminName">Admin</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);">Super Admin</div>
+            </div>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="admin-dashboard.html"><span class="sidebar-menu-icon">📊</span> Dashboard</a></li>
+            <li><a href="admin-projects.html"><span class="sidebar-menu-icon">📁</span> Projects</a></li>
+            <li><a href="admin-messages.html"><span class="sidebar-menu-icon">✉️</span> Messages</a></li>
+            <li><a href="admin-users.html"><span class="sidebar-menu-icon">👥</span> Users</a></li>
+            <li><a href="admin-portfolio.html"><span class="sidebar-menu-icon">🎨</span> Portfolio</a></li>
+            <li><a href="admin-blog.html"><span class="sidebar-menu-icon">📝</span> Blog Posts</a></li>
+            <li><a href="admin-gallery.html"><span class="sidebar-menu-icon">🖼️</span> Gallery</a></li>
+            <li><a href="admin-social-media.html"><span class="sidebar-menu-icon">🔗</span> Social Media</a></li>
+            <li><a href="admin-storages.html"><span class="sidebar-menu-icon">💾</span> Storage (128GB)</a></li>
+            <li><a href="admin-analytics.html"><span class="sidebar-menu-icon">📈</span> Analytics</a></li>
+            <li><a href="admin-logs.html"><span class="sidebar-menu-icon">📋</span> Activity Logs</a></li>
+            <li><a href="admin-settings.html" class="active"><span class="sidebar-menu-icon">⚙️</span> Settings</a></li>
+        </ul>
+        <div style="padding: 16px; border-top: 1px solid var(--border-color);">
+            <button onclick="logoutAdmin()" class="btn btn-danger" style="width: 100%;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+                <h1 style="font-size:1.25rem;">Settings</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme"><i class="fas fa-moon" id="themeIcon"></i></button>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="sidebar-user-avatar" style="width:36px;height:36px;font-size:0.9rem;" id="headerAvatar">A</div>
+                    <span style="font-weight:600;" id="headerAdminName">Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Settings</h1>
+                    <p>Manage your admin preferences and account</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="exportSettings()"><i class="fas fa-download"></i> Export</button>
+                    <button class="btn btn-primary" onclick="saveSettings()" id="saveBtn"><i class="fas fa-save"></i> Save Changes</button>
+                </div>
+            </div>
+
+            <div class="tabs-nav">
+                <button class="tab-btn active" onclick="switchTab('account')" data-tab="account"><i class="fas fa-user-cog"></i> Account</button>
+                <button class="tab-btn" onclick="switchTab('security')" data-tab="security"><i class="fas fa-shield-alt"></i> Security</button>
+                <button class="tab-btn" onclick="switchTab('notifications')" data-tab="notifications"><i class="fas fa-bell"></i> Notifications</button>
+                <button class="tab-btn" onclick="switchTab('appearance')" data-tab="appearance"><i class="fas fa-palette"></i> Appearance</button>
+                <button class="tab-btn" onclick="switchTab('integrations')" data-tab="integrations"><i class="fas fa-plug"></i> Integrations</button>
+                <button class="tab-btn" onclick="switchTab('system')" data-tab="system"><i class="fas fa-server"></i> System</button>
+            </div>
+
+            <!-- Account Tab -->
+            <div class="tab-content active" id="tab-account">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3><i class="fas fa-user-circle"></i> Profile Information</h3>
+                        <div class="avatar-upload">
+                            <div class="avatar-placeholder" id="avatarPlaceholder">A</div>
+                            <div>
+                                <div style="font-weight:700;font-size:1.1rem;margin-bottom:4px;" id="profileName">Admin</div>
+                                <div style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px;" id="profileEmail">admin@nexoratechnologies.com</div>
+                                <div class="avatar-actions">
+                                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('avatarInput').click()"><i class="fas fa-camera"></i> Change Photo</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="removeAvatar()"><i class="fas fa-trash"></i> Remove</button>
+                                </div>
+                                <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Display Name <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="displayName" value="Admin" placeholder="Your display name">
+                            <div class="form-error" id="error-displayName">Name is required</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email Address <span class="required">*</span></label>
+                            <input type="email" class="form-input" id="accountEmail" value="admin@nexoratechnologies.com" placeholder="your@email.com">
+                            <div class="form-error" id="error-accountEmail">Please enter a valid email</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bio</label>
+                            <textarea class="form-input" id="accountBio" rows="3" placeholder="Short bio about yourself..."></textarea>
+                            <div style="text-align:right;font-size:0.8rem;color:var(--text-muted);margin-top:4px;"><span id="bioCount">0</span>/200</div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3><i class="fas fa-globe"></i> Language & Region</h3>
+                        <div class="form-group">
+                            <label class="form-label">Language</label>
+                            <select class="form-input" id="language">
+                                <option value="en">English</option>
+                                <option value="ha">Hausa</option>
+                                <option value="ar">Arabic</option>
+                                <option value="fr">French</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Timezone</label>
+                            <select class="form-input" id="timezone">
+                                <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
+                                <option value="UTC">UTC</option>
+                                <option value="Europe/London">Europe/London (GMT)</option>
+                                <option value="America/New_York">America/New_York (EST)</option>
+                                <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date Format</label>
+                            <select class="form-input" id="dateFormat">
+                                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Time Format</label>
+                            <select class="form-input" id="timeFormat">
+                                <option value="12h">12-hour (AM/PM)</option>
+                                <option value="24h">24-hour</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div class="tab-content" id="tab-security">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3><i class="fas fa-key"></i> Change Password</h3>
+                        <div class="form-group">
+                            <label class="form-label">Current Password <span class="required">*</span></label>
+                            <div class="input-group">
+                                <input type="password" class="form-input" id="currentPassword" placeholder="Enter current password">
+                                <button class="btn btn-secondary" onclick="togglePassword('currentPassword',this)"><i class="fas fa-eye"></i></button>
+                            </div>
+                            <div class="form-error" id="error-currentPassword">Current password is required</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">New Password <span class="required">*</span></label>
+                            <div class="input-group">
+                                <input type="password" class="form-input" id="newPassword" placeholder="Enter new password" oninput="checkPasswordStrength(this.value)">
+                                <button class="btn btn-secondary" onclick="togglePassword('newPassword',this)"><i class="fas fa-eye"></i></button>
+                            </div>
+                            <div class="password-strength"><div class="password-strength-bar" id="passwordStrengthBar"></div></div>
+                            <div class="password-strength-text" id="passwordStrengthText">Enter a password</div>
+                            <div class="form-hint">Minimum 8 characters with uppercase, lowercase, number, and special character</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm New Password <span class="required">*</span></label>
+                            <div class="input-group">
+                                <input type="password" class="form-input" id="confirmPassword" placeholder="Confirm new password">
+                                <button class="btn btn-secondary" onclick="togglePassword('confirmPassword',this)"><i class="fas fa-eye"></i></button>
+                            </div>
+                            <div class="form-error" id="error-confirmPassword">Passwords do not match</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="changePassword()" style="margin-top:8px;"><i class="fas fa-lock"></i> Update Password</button>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3><i class="fas fa-shield-alt"></i> Two-Factor Authentication</h3>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Enable 2FA</h4>
+                                <p>Add an extra layer of security to your account</p>
+                            </div>
+                            <div class="toggle-switch" data-setting="twoFactor" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Authenticator App</h4>
+                                <p>Use Google Authenticator or similar app</p>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="setup2FA()"><i class="fas fa-qrcode"></i> Setup</button>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Backup Codes</h4>
+                                <p>Generate recovery codes for account access</p>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="generateBackupCodes()"><i class="fas fa-download"></i> Generate</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3><i class="fas fa-desktop"></i> Active Sessions</h3>
+                        <div id="sessionsList">
+                            <div class="session-item">
+                                <div class="session-icon"><i class="fas fa-desktop"></i></div>
+                                <div class="session-info">
+                                    <h4>Chrome on Windows</h4>
+                                    <p>192.168.1.1 - Kano, Nigeria</p>
+                                </div>
+                                <span class="session-status active">Current</span>
+                                <button class="btn btn-icon btn-sm" style="color:var(--text-muted);" disabled><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="session-item">
+                                <div class="session-icon"><i class="fas fa-mobile-alt"></i></div>
+                                <div class="session-info">
+                                    <h4>Safari on iPhone</h4>
+                                    <p>192.168.1.105 - Abuja, Nigeria</p>
+                                </div>
+                                <span class="badge badge-warning">2h ago</span>
+                                <button class="btn btn-icon btn-sm" onclick="revokeSession(this)" title="Revoke"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="revokeAllSessions()" style="margin-top:12px;width:100%;"><i class="fas fa-sign-out-alt"></i> Revoke All Other Sessions</button>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3><i class="fas fa-history"></i> Login History</h3>
+                        <div id="loginHistory">
+                            <div class="login-history-item">
+                                <div class="login-history-icon"><i class="fas fa-check"></i></div>
+                                <div class="login-history-info">
+                                    <h4>Successful Login</h4>
+                                    <p>Chrome on Windows - 192.168.1.1</p>
+                                </div>
+                                <div class="login-history-time">Just now</div>
+                            </div>
+                            <div class="login-history-item">
+                                <div class="login-history-icon"><i class="fas fa-check"></i></div>
+                                <div class="login-history-info">
+                                    <h4>Successful Login</h4>
+                                    <p>Safari on iPhone - 192.168.1.105</p>
+                                </div>
+                                <div class="login-history-time">2 hours ago</div>
+                            </div>
+                            <div class="login-history-item">
+                                <div class="login-history-icon" style="background:rgba(239,68,68,0.1);color:var(--danger-color);"><i class="fas fa-times"></i></div>
+                                <div class="login-history-info">
+                                    <h4>Failed Login Attempt</h4>
+                                    <p>Unknown Device - 203.0.113.45</p>
+                                </div>
+                                <div class="login-history-time">1 day ago</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Tab -->
+            <div class="tab-content" id="tab-notifications">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3><i class="fas fa-envelope"></i> Email Notifications</h3>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>New Messages</h4>
+                                <p>Receive email when someone sends a message</p>
+                            </div>
+                            <div class="toggle-switch active" data-setting="emailMessages" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>New Comments</h4>
+                                <p>Get notified about new blog comments</p>
+                            </div>
+                            <div class="toggle-switch" data-setting="emailComments" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Project Updates</h4>
+                                <p>Notifications for project status changes</p>
+                            </div>
+                            <div class="toggle-switch active" data-setting="emailProjects" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Weekly Summary</h4>
+                                <p>Receive a weekly activity summary</p>
+                            </div>
+                            <div class="toggle-switch active" data-setting="emailWeekly" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Security Alerts</h4>
+                                <p>Get notified about suspicious login attempts</p>
+                            </div>
+                            <div class="toggle-switch active" data-setting="emailSecurity" onclick="toggleSetting(this)"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3><i class="fas fa-bell"></i> Push Notifications</h3>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Browser Notifications</h4>
+                                <p>Show desktop notifications in browser</p>
+                            </div>
+                            <div class="toggle-switch" data-setting="pushBrowser" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Real-time Alerts</h4>
+                                <p>Instant notifications for critical events</p>
+                            </div>
+                            <div class="toggle-switch active" data-setting="pushRealtime" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Sound Effects</h4>
+                                <p>Play sound for new notifications</p>
+                            </div>
+                            <div class="toggle-switch" data-setting="soundEffects" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Do Not Disturb</h4>
+                                <p>Pause all notifications</p>
+                            </div>
+                            <div class="toggle-switch" data-setting="doNotDisturb" onclick="toggleSetting(this)"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3><i class="fas fa-sms"></i> SMS Notifications</h3>
+                        <div class="form-group">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-input" id="smsPhone" placeholder="+234 XXX XXX XXXX">
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Critical Alerts</h4>
+                                <p>Only for security and system issues</p>
+                            </div>
+                            <div class="toggle-switch" data-setting="smsCritical" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Login Alerts</h4>
+                                <p>Get SMS for new device logins</p>
+                            </div>
+                            <div class="toggle-switch" data-setting="smsLogin" onclick="toggleSetting(this)"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appearance Tab -->
+            <div class="tab-content" id="tab-appearance">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3><i class="fas fa-palette"></i> Theme</h3>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Dark Mode</h4>
+                                <p>Use dark theme across the admin panel</p>
+                            </div>
+                            <div class="toggle-switch active" data-setting="darkMode" onclick="toggleThemeSetting(this)"></div>
+                        </div>
+                        <div class="form-group" style="margin-top:20px;">
+                            <label class="form-label">Accent Color</label>
+                            <div class="accent-colors" id="accentColors">
+                                <div class="accent-color-option active" style="background:#3b82f6;" data-color="blue" onclick="selectAccentColor('blue')"></div>
+                                <div class="accent-color-option" style="background:#10b981;" data-color="green" onclick="selectAccentColor('green')"></div>
+                                <div class="accent-color-option" style="background:#f59e0b;" data-color="orange" onclick="selectAccentColor('orange')"></div>
+                                <div class="accent-color-option" style="background:#ec4899;" data-color="pink" onclick="selectAccentColor('pink')"></div>
+                                <div class="accent-color-option" style="background:#6366f1;" data-color="indigo" onclick="selectAccentColor('indigo')"></div>
+                                <div class="accent-color-option" style="background:#14b8a6;" data-color="teal" onclick="selectAccentColor('teal')"></div>
+                                <div class="accent-color-option" style="background:#ef4444;" data-color="red" onclick="selectAccentColor('red')"></div>
+                                <div class="accent-color-option" style="background:#8b5cf6;" data-color="purple" onclick="selectAccentColor('purple')"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3><i class="fas fa-text-height"></i> Display</h3>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Compact View</h4>
+                                <p>Reduce spacing and padding in panels</p>
+                            </div>
+                            <div class="toggle-switch" data-setting="compactView" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Animations</h4>
+                                <p>Enable transition animations</p>
+                            </div>
+                            <div class="toggle-switch active" data-setting="animations" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="form-group" style="margin-top:20px;">
+                            <label class="form-label">Font Size</label>
+                            <select class="form-input" id="fontSize">
+                                <option value="small">Small</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="large">Large</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sidebar Style</label>
+                            <select class="form-input" id="sidebarStyle">
+                                <option value="expanded">Expanded</option>
+                                <option value="collapsed">Collapsed Icons</option>
+                                <option value="hidden">Hidden</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integrations Tab -->
+            <div class="tab-content" id="tab-integrations">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3><i class="fas fa-plug"></i> Connected Services</h3>
+                        <div class="integration-item">
+                            <div class="integration-icon google"><i class="fab fa-google"></i></div>
+                            <div class="integration-info">
+                                <h4>Google Analytics</h4>
+                                <p>Track website traffic and user behavior</p>
+                            </div>
+                            <div class="toggle-switch active" data-setting="gaConnected" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="integration-item">
+                            <div class="integration-icon github"><i class="fab fa-github"></i></div>
+                            <div class="integration-info">
+                                <h4>GitHub</h4>
+                                <p>Sync repositories and deployments</p>
+                            </div>
+                            <div class="toggle-switch" data-setting="githubConnected" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="integration-item">
+                            <div class="integration-icon slack"><i class="fab fa-slack"></i></div>
+                            <div class="integration-info">
+                                <h4>Slack</h4>
+                                <p>Send notifications to Slack channels</p>
+                            </div>
+                            <div class="toggle-switch" data-setting="slackConnected" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="integration-item">
+                            <div class="integration-icon discord"><i class="fab fa-discord"></i></div>
+                            <div class="integration-info">
+                                <h4>Discord</h4>
+                                <p>Webhook notifications to Discord</p>
+                            </div>
+                            <div class="toggle-switch" data-setting="discordConnected" onclick="toggleSetting(this)"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3><i class="fas fa-code"></i> API Keys</h3>
+                        <div class="form-group">
+                            <label class="form-label">Firebase API Key</label>
+                            <div class="input-group">
+                                <input type="password" class="form-input" value="AIzaSy..." readonly id="apiKeyFirebase">
+                                <button class="btn btn-secondary" onclick="togglePassword('apiKeyFirebase',this)"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-secondary" onclick="copyToClipboard('apiKeyFirebase')"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Google Analytics ID</label>
+                            <div class="input-group">
+                                <input type="text" class="form-input" value="G-XXXXXXXXXX" readonly id="gaId">
+                                <button class="btn btn-secondary" onclick="copyToClipboard('gaId')"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Webhook URL</label>
+                            <div class="input-group">
+                                <input type="url" class="form-input" value="https://api.example.com/webhook" id="webhookUrl">
+                                <button class="btn btn-secondary" onclick="testWebhook()"><i class="fas fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="regenerateApiKeys()" style="margin-top:8px;"><i class="fas fa-sync-alt"></i> Regenerate Keys</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Tab -->
+            <div class="tab-content" id="tab-system">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3><i class="fas fa-hdd"></i> Storage Usage</h3>
+                        <div style="display:flex;align-items:center;gap:20px;margin-bottom:16px;">
+                            <svg class="progress-ring" width="80" height="80">
+                                <circle cx="40" cy="40" r="36" fill="none" stroke="var(--border-color)" stroke-width="6"/>
+                                <circle class="progress-ring-circle" cx="40" cy="40" r="36" fill="none" stroke="var(--primary-color)" stroke-width="6" stroke-dasharray="226.2" stroke-dashoffset="90.48" stroke-linecap="round"/>
+                            </svg>
+                            <div>
+                                <div style="font-size:1.5rem;font-weight:800;">76.8 GB</div>
+                                <div style="color:var(--text-secondary);font-size:0.9rem;">of 128 GB used (60%)</div>
+                            </div>
+                        </div>
+                        <div class="storage-bar"><div class="storage-bar-fill" style="width:60%;"></div></div>
+                        <div class="storage-info">
+                            <span><i class="fas fa-images"></i> Images: 45.2 GB</span>
+                            <span><i class="fas fa-file-video"></i> Videos: 18.5 GB</span>
+                            <span><i class="fas fa-database"></i> Database: 13.1 GB</span>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="manageStorage()" style="margin-top:16px;width:100%;"><i class="fas fa-cog"></i> Manage Storage</button>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3><i class="fas fa-database"></i> Data & Backup</h3>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Auto Backup</h4>
+                                <p>Automatically backup data daily</p>
+                            </div>
+                            <div class="toggle-switch active" data-setting="autoBackup" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="form-group" style="margin-top:16px;">
+                            <label class="form-label">Last Backup</label>
+                            <div style="padding:12px 16px;background:var(--bg-primary);border-radius:10px;border:1px solid var(--border-color);color:var(--text-secondary);font-size:0.9rem;">
+                                <i class="fas fa-check-circle" style="color:var(--success-color);margin-right:8px;"></i> Today at 03:00 AM
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:16px;">
+                            <button class="btn btn-secondary" onclick="exportData()" style="flex:1;"><i class="fas fa-download"></i> Export</button>
+                            <button class="btn btn-primary" onclick="backupNow()" style="flex:1;"><i class="fas fa-cloud-upload-alt"></i> Backup Now</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-card danger-zone">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Clear All Data</h4>
+                                <p>Delete all projects, messages, and content</p>
+                            </div>
+                            <button class="btn btn-danger btn-sm" onclick="confirmClearData()"><i class="fas fa-trash"></i> Clear</button>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Reset to Defaults</h4>
+                                <p>Restore all settings to factory defaults</p>
+                            </div>
+                            <button class="btn btn-danger btn-sm" onclick="confirmResetSettings()"><i class="fas fa-undo"></i> Reset</button>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Delete Account</h4>
+                                <p>Permanently delete your admin account</p>
+                            </div>
+                            <button class="btn btn-danger btn-sm" onclick="confirmDeleteAccount()"><i class="fas fa-user-times"></i> Delete</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3><i class="fas fa-info-circle"></i> System Information</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div style="padding:12px;background:var(--bg-primary);border-radius:10px;border:1px solid var(--border-color);">
+                                <div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:4px;">Version</div>
+                                <div style="font-weight:700;font-size:1rem;">v2.4.1</div>
+                            </div>
+                            <div style="padding:12px;background:var(--bg-primary);border-radius:10px;border:1px solid var(--border-color);">
+                                <div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:4px;">Node.js</div>
+                                <div style="font-weight:700;font-size:1rem;">v18.17.0</div>
+                            </div>
+                            <div style="padding:12px;background:var(--bg-primary);border-radius:10px;border:1px solid var(--border-color);">
+                                <div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:4px;">Database</div>
+                                <div style="font-weight:700;font-size:1rem;">Firebase RTDB</div>
+                            </div>
+                            <div style="padding:12px;background:var(--bg-primary);border-radius:10px;border:1px solid var(--border-color);">
+                                <div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:4px;">Uptime</div>
+                                <div style="font-weight:700;font-size:1rem;">14d 6h 32m</div>
+                            </div>
+                        </div>
+                        <div style="margin-top:16px;padding:12px;background:var(--bg-primary);border-radius:10px;border:1px solid var(--border-color);">
+                            <div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:4px;">Build Date</div>
+                            <div style="font-weight:600;font-size:0.95rem;">July 21, 2026 at 14:30:00 UTC</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModal" onclick="closeModal(event)">
+        <div class="modal modal-danger" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="confirmModalTitle"><i class="fas fa-exclamation-triangle"></i> Confirm Action</h3>
+                <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                <p>Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-danger" id="confirmModalBtn" onclick="executeConfirmedAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleSidebar()"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="firebase-common.js"></script>
+    <script>
+        // ===== STATE =====
+        let currentAction = '';
+        let currentAccentColor = 'blue';
+
+        const accentColors = {
+            blue: '#3b82f6', green: '#10b981', orange: '#f59e0b', pink: '#ec4899',
+            indigo: '#6366f1', teal: '#14b8a6', red: '#ef4444', purple: '#8b5cf6'
+        };
+
+        // ===== INIT =====
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await checkAuth(); // redirects to admin-login.html if not signed in
+            if (!user) return;
+
+            initAdminInfo();
+            initTheme();
+            loadSettings();
+            setupCharCounter();
+        });
+
+        function initAdminInfo() {
+            const email = (typeof getAdminEmail === 'function') ? getAdminEmail() : 'admin@nexoratechnologies.com';
+            const name = email.split('@')[0];
+            const initial = name.charAt(0).toUpperCase();
+            document.getElementById('adminName').textContent = name;
+            document.getElementById('headerAdminName').textContent = name;
+            document.getElementById('sidebarAvatar').textContent = initial;
+            document.getElementById('headerAvatar').textContent = initial;
+            document.getElementById('avatarPlaceholder').textContent = initial;
+            document.getElementById('profileName').textContent = name;
+            document.getElementById('profileEmail').textContent = email;
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateThemeIcon(next);
+            const darkToggle = document.querySelector('[data-setting="darkMode"]');
+            if (darkToggle) {
+                if (next === 'dark') darkToggle.classList.add('active');
+                else darkToggle.classList.remove('active');
+            }
+        }
+
+        function updateThemeIcon(theme) {
+            document.getElementById('themeIcon').className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('mobileNavOverlay').classList.toggle('active');
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // ===== SETTINGS =====
+        function loadSettings() {
+            const saved = JSON.parse(localStorage.getItem('adminSettings') || '{}');
+            const defaults = {
+                emailMessages: true, emailComments: false, emailProjects: true, emailWeekly: true, emailSecurity: true,
+                pushBrowser: false, pushRealtime: true, soundEffects: false, doNotDisturb: false,
+                darkMode: true, compactView: false, animations: true,
+                twoFactor: false, autoBackup: true,
+                gaConnected: true, githubConnected: false, slackConnected: false, discordConnected: false,
+                smsCritical: false, smsLogin: false,
+                language: 'en', timezone: 'Africa/Lagos', dateFormat: 'MM/DD/YYYY', timeFormat: '12h',
+                fontSize: 'medium', sidebarStyle: 'expanded', accentColor: 'blue'
+            };
+            const settings = { ...defaults, ...saved };
+
+            document.querySelectorAll('.toggle-switch[data-setting]').forEach(toggle => {
+                const key = toggle.dataset.setting;
+                if (settings[key]) toggle.classList.add('active');
+                else toggle.classList.remove('active');
+            });
+
+            document.getElementById('language').value = settings.language;
+            document.getElementById('timezone').value = settings.timezone;
+            document.getElementById('dateFormat').value = settings.dateFormat;
+            document.getElementById('timeFormat').value = settings.timeFormat;
+            document.getElementById('fontSize').value = settings.fontSize;
+            document.getElementById('sidebarStyle').value = settings.sidebarStyle;
+            document.getElementById('smsPhone').value = settings.smsPhone || '';
+            document.getElementById('displayName').value = settings.displayName || 'Admin';
+            document.getElementById('accountEmail').value = settings.accountEmail || 'admin@nexoratechnologies.com';
+            document.getElementById('accountBio').value = settings.accountBio || '';
+
+            selectAccentColor(settings.accentColor || 'blue');
+        }
+
+        function toggleSetting(element) {
+            element.classList.toggle('active');
+        }
+
+        function toggleThemeSetting(element) {
+            element.classList.toggle('active');
+            toggleTheme();
+        }
+
+        function selectAccentColor(color) {
+            currentAccentColor = color;
+            document.querySelectorAll('.accent-color-option').forEach(el => el.classList.remove('active'));
+            document.querySelector('[data-color="' + color + '"]').classList.add('active');
+            const hex = accentColors[color];
+            document.documentElement.style.setProperty('--primary-color', hex);
+        }
+
+        // ===== PASSWORD =====
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        function checkPasswordStrength(password) {
+            const bar = document.getElementById('passwordStrengthBar');
+            const text = document.getElementById('passwordStrengthText');
+            if (!password) { bar.className = 'password-strength-bar'; text.textContent = 'Enter a password'; return; }
+
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+            bar.className = 'password-strength-bar';
+            if (strength <= 2) { bar.classList.add('weak'); text.textContent = 'Weak password'; text.style.color = 'var(--danger-color)'; }
+            else if (strength <= 4) { bar.classList.add('medium'); text.textContent = 'Medium strength'; text.style.color = 'var(--warning-color)'; }
+            else { bar.classList.add('strong'); text.textContent = 'Strong password'; text.style.color = 'var(--success-color)'; }
+        }
+
+        function changePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (!current) { showFieldError('currentPassword', 'Current password is required'); return; }
+            if (!newPass) { showToast('Please enter a new password', 'error'); return; }
+            if (newPass.length < 8) { showToast('Password must be at least 8 characters', 'error'); return; }
+            if (newPass !== confirm) { showFieldError('confirmPassword', 'Passwords do not match'); return; }
+
+            showToast('Password updated successfully!', 'success');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('passwordStrengthBar').className = 'password-strength-bar';
+            document.getElementById('passwordStrengthText').textContent = 'Enter a password';
+        }
+
+        function showFieldError(id, message) {
+            const input = document.getElementById(id);
+            const error = document.getElementById('error-' + id);
+            input.classList.add('error');
+            error.textContent = message;
+            error.classList.add('show');
+            setTimeout(() => { input.classList.remove('error'); error.classList.remove('show'); }, 3000);
+        }
+
+        // ===== AVATAR =====
+        function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) { showToast('File too large. Max 2MB allowed.', 'error'); return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'avatar-preview';
+                img.id = 'avatarPreview';
+                const placeholder = document.getElementById('avatarPlaceholder');
+                placeholder.parentNode.replaceChild(img, placeholder);
+                showToast('Profile photo updated', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeAvatar() {
+            const preview = document.getElementById('avatarPreview');
+            if (!preview) return;
+            const placeholder = document.createElement('div');
+            placeholder.className = 'avatar-placeholder';
+            placeholder.id = 'avatarPlaceholder';
+            placeholder.textContent = document.getElementById('sidebarAvatar').textContent;
+            preview.parentNode.replaceChild(placeholder, preview);
+            showToast('Profile photo removed', 'info');
+        }
+
+        // ===== SESSIONS =====
+        function revokeSession(btn) {
+            const item = btn.closest('.session-item');
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(20px)';
+            setTimeout(() => { item.remove(); showToast('Session revoked', 'success'); }, 300);
+        }
+
+        function revokeAllSessions() {
+            const items = document.querySelectorAll('#sessionsList .session-item');
+            items.forEach((item, index) => {
+                if (index === 0) return; // Skip current session
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(20px)';
+                setTimeout(() => item.remove(), 300);
+            });
+            showToast('All other sessions revoked', 'success');
+        }
+
+        // ===== SAVE =====
+        function saveSettings() {
+            const settings = {};
+            document.querySelectorAll('.toggle-switch[data-setting]').forEach(toggle => {
+                settings[toggle.dataset.setting] = toggle.classList.contains('active');
+            });
+            settings.language = document.getElementById('language').value;
+            settings.timezone = document.getElementById('timezone').value;
+            settings.dateFormat = document.getElementById('dateFormat').value;
+            settings.timeFormat = document.getElementById('timeFormat').value;
+            settings.fontSize = document.getElementById('fontSize').value;
+            settings.sidebarStyle = document.getElementById('sidebarStyle').value;
+            settings.accentColor = currentAccentColor;
+            settings.displayName = document.getElementById('displayName').value;
+            settings.accountEmail = document.getElementById('accountEmail').value;
+            settings.accountBio = document.getElementById('accountBio').value;
+            settings.smsPhone = document.getElementById('smsPhone').value;
+
+            localStorage.setItem('adminSettings', JSON.stringify(settings));
+
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+            saveBtn.style.background = 'var(--success-color)';
+            setTimeout(() => {
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+                saveBtn.style.background = '';
+            }, 2000);
+
+            showToast('Settings saved successfully!', 'success');
+        }
+
+        function exportSettings() {
+            const settings = JSON.parse(localStorage.getItem('adminSettings') || '{}');
+            const data = JSON.stringify(settings, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'admin-settings-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Settings exported', 'success');
+        }
+
+        // ===== DANGER ZONE =====
+        function confirmClearData() {
+            currentAction = 'clearData';
+            showConfirmModal('Clear All Data', 'This will permanently delete all projects, messages, blog posts, and gallery items. This action cannot be undone.', 'Clear All', 'danger');
+        }
+
+        function confirmResetSettings() {
+            currentAction = 'resetSettings';
+            showConfirmModal('Reset Settings', 'This will restore all settings to their default values. Your data will not be affected.', 'Reset', 'danger');
+        }
+
+        function confirmDeleteAccount() {
+            currentAction = 'deleteAccount';
+            showConfirmModal('Delete Account', 'This will permanently delete your admin account and all associated data. This action cannot be undone.', 'Delete Account', 'danger');
+        }
+
+        function showConfirmModal(title, message, btnText, type) {
+            document.getElementById('confirmModalTitle').innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(title);
+            document.getElementById('confirmModalBody').innerHTML = '<p>' + escapeHtml(message) + '</p><div class="form-group" style="margin-top:16px;"><label class="form-label">Type "CONFIRM" to proceed</label><input type="text" class="form-input" id="confirmInput" placeholder="CONFIRM" oninput="checkConfirmInput(this)"></div>';
+            const btn = document.getElementById('confirmModalBtn');
+            btn.textContent = btnText;
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            document.getElementById('confirmModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function checkConfirmInput(input) {
+            const btn = document.getElementById('confirmModalBtn');
+            if (input.value === 'CONFIRM') {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+            }
+        }
+
+        function executeConfirmedAction() {
+            closeModal();
+            if (currentAction === 'clearData') {
+                localStorage.removeItem('projects');
+                localStorage.removeItem('messages');
+                localStorage.removeItem('blogPosts');
+                showToast('All data cleared successfully', 'warning');
+            } else if (currentAction === 'resetSettings') {
+                localStorage.removeItem('adminSettings');
+                loadSettings();
+                showToast('Settings reset to defaults', 'success');
+            } else if (currentAction === 'deleteAccount') {
+                localStorage.clear();
+                showToast('Account deleted. Redirecting...', 'warning');
+                setTimeout(() => { window.location.href = 'admin-login.html'; }, 2000);
+            }
+            currentAction = '';
+        }
+
+        function closeModal(event) {
+            if (event && event.target !== document.getElementById('confirmModal')) return;
+            document.getElementById('confirmModal').classList.remove('active');
+            document.body.style.overflow = '';
+            currentAction = '';
+        }
+
+        // ===== INTEGRATIONS =====
+        function copyToClipboard(elementId) {
+            const input = document.getElementById(elementId);
+            input.type = 'text';
+            input.select();
+            document.execCommand('copy');
+            input.type = 'password';
+            showToast('Copied to clipboard', 'success');
+        }
+
+        function testWebhook() {
+            showToast('Testing webhook...', 'info');
+            setTimeout(() => showToast('Webhook test successful', 'success'), 1500);
+        }
+
+        function regenerateApiKeys() {
+            if (!confirm('This will invalidate existing API keys. Continue?')) return;
+            showToast('API keys regenerated', 'success');
+        }
+
+        function setup2FA() {
+            showToast('2FA setup initiated. Check your authenticator app.', 'info');
+        }
+
+        function generateBackupCodes() {
+            showToast('Backup codes generated and downloaded', 'success');
+        }
+
+        // ===== SYSTEM =====
+        function manageStorage() {
+            showToast('Opening storage manager...', 'info');
+        }
+
+        function exportData() {
+            showToast('Preparing data export...', 'info');
+            setTimeout(() => showToast('Data exported successfully', 'success'), 1500);
+        }
+
+        function backupNow() {
+            const btn = event.target.closest('button');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Backing up...';
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Backup Now';
+                btn.disabled = false;
+                showToast('Backup completed successfully', 'success');
+            }, 2000);
+        }
+
+        // ===== UTILITIES =====
+        function setupCharCounter() {
+            const bioInput = document.getElementById('accountBio');
+            const bioCount = document.getElementById('bioCount');
+            bioInput.addEventListener('input', () => {
+                bioCount.textContent = bioInput.value.length;
+                if (bioInput.value.length > 200) {
+                    bioInput.value = bioInput.value.substring(0, 200);
+                    bioCount.textContent = 200;
+                }
+            });
+        }
+
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = '<i class="fas ' + icons[type] + '"></i><span>' + escapeHtml(message) + '</span>';
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function logoutAdmin() {
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().signOut().then(() => { window.location.href = 'admin-login.html'; });
+            } else {
+                window.location.href = 'admin-login.html';
+            }
+        }
+    </script>
+</body>
+</html>

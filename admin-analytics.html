@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Analytics | Admin Panel</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .content-area { padding: 32px; }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        /* Live Badge */
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #22c55e;
+            animation: pulse 2s infinite;
+        }
+        .live-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .stat-icon.blue { background: rgba(59,130,246,0.1); color: #3b82f6; }
+        .stat-icon.green { background: rgba(34,197,94,0.1); color: #22c55e; }
+        .stat-icon.orange { background: rgba(249,115,22,0.1); color: #f97316; }
+        .stat-icon.red { background: rgba(239,68,68,0.1); color: #ef4444; }
+        .stat-icon.purple { background: rgba(168,85,247,0.1); color: #a855f7; }
+        .stat-icon.teal { background: rgba(20,184,166,0.1); color: #14b8a6; }
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+        }
+        .stat-trend.positive { background: rgba(34,197,94,0.1); color: #22c55e; }
+        .stat-trend.negative { background: rgba(239,68,68,0.1); color: #ef4444; }
+        .stat-trend.neutral { background: rgba(148,163,184,0.1); color: #94a3b8; }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.02em;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+        .stat-sparkline {
+            height: 40px;
+            margin-top: 8px;
+        }
+        .stat-sparkline svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Toolbar */
+        .analytics-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .date-range-picker {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .date-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .date-btn:hover { color: var(--text-primary); border-color: var(--primary-color); }
+        .date-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        .refresh-btn {
+            padding: 8px 14px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+        }
+        .refresh-btn:hover { color: var(--primary-color); border-color: var(--primary-color); }
+        .refresh-btn.spinning i { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            transition: var(--transition);
+        }
+        .chart-card:hover {
+            border-color: var(--border-light);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+        .chart-card.col-6 { grid-column: span 6; }
+        .chart-card.col-4 { grid-column: span 4; }
+        .chart-card.col-8 { grid-column: span 8; }
+        .chart-card.col-12 { grid-column: span 12; }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .chart-header h3 {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+        .chart-header h3 i { color: var(--primary-color); }
+        .chart-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .chart-action-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+        .chart-action-btn:hover { color: var(--primary-color); background: var(--primary-glow); }
+        .chart-body {
+            position: relative;
+            min-height: 250px;
+        }
+
+        /* SVG Charts */
+        .svg-chart {
+            width: 100%;
+            height: 250px;
+        }
+        .svg-chart .grid-line {
+            stroke: var(--border-color);
+            stroke-width: 1;
+            stroke-dasharray: 4,4;
+            opacity: 0.5;
+        }
+        .svg-chart .axis-text {
+            fill: var(--text-secondary);
+            font-size: 11px;
+        }
+        .svg-chart .chart-line {
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .svg-chart .chart-area {
+            stroke: none;
+            opacity: 0.15;
+        }
+        .svg-chart .chart-point {
+            fill: var(--bg-card);
+            stroke-width: 2.5;
+            r: 4;
+            transition: r 0.2s ease;
+            cursor: pointer;
+        }
+        .svg-chart .chart-point:hover { r: 6; }
+        .svg-chart .chart-bar {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .svg-chart .chart-bar:hover { opacity: 0.8; }
+        .chart-tooltip {
+            position: absolute;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .chart-tooltip.active { opacity: 1; }
+
+        /* Doughnut Chart */
+        .doughnut-container {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+        .doughnut-chart {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            flex-shrink: 0;
+        }
+        .doughnut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .doughnut-center .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        .doughnut-center .label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .doughnut-legend {
+            flex: 1;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .legend-item:last-child { border-bottom: none; }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        .legend-info {
+            flex: 1;
+        }
+        .legend-info .name {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .legend-info .percent {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .legend-value {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        /* Progress Bars */
+        .progress-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .progress-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .progress-label {
+            width: 100px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 32px;
+            background: var(--bg-dark);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .progress-value {
+            width: 60px;
+            text-align: right;
+            font-size: 0.9rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* Top Pages Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            background: var(--bg-body);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+        .data-table tbody tr {
+            transition: var(--transition);
+        }
+        .data-table tbody tr:hover {
+            background: rgba(59,130,246,0.03);
+        }
+        .page-rank {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .page-rank.gold { background: rgba(234,179,8,0.15); color: #eab308; }
+        .page-rank.silver { background: rgba(148,163,184,0.15); color: #94a3b8; }
+        .page-rank.bronze { background: rgba(180,83,9,0.15); color: #b45309; }
+        .page-rank.normal { background: var(--bg-body); color: var(--text-secondary); }
+        .page-path {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .page-views {
+            font-weight: 700;
+        }
+        .page-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .page-trend.up { color: #22c55e; }
+        .page-trend.down { color: #ef4444; }
+
+        /* Funnel */
+        .funnel-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px 0;
+        }
+        .funnel-step {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .funnel-bar {
+            height: 40px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .funnel-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+        }
+        .funnel-dropoff {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            width: 80px;
+            text-align: right;
+        }
+
+        /* Performance Metrics */
+        .perf-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .perf-item {
+            text-align: center;
+            padding: 16px;
+            background: var(--bg-body);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+        }
+        .perf-score {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .perf-score.good { color: #22c55e; }
+        .perf-score.ok { color: #f97316; }
+        .perf-score.bad { color: #ef4444; }
+        .perf-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .perf-bar {
+            height: 6px;
+            background: var(--bg-dark);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .perf-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+
+        /* Real-time visitors */
+        .realtime-visitors {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(37,99,235,0.05), rgba(168,85,247,0.05));
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+        .realtime-count {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+        .realtime-info h4 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .realtime-info p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .realtime-pages {
+            flex: 1;
+        }
+        .realtime-page-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .realtime-page-item:last-child { border-bottom: none; }
+
+        /* Export Dropdown */
+        .export-dropdown {
+            position: relative;
+        }
+        .export-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 8px;
+            min-width: 160px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.2s ease;
+            z-index: 100;
+        }
+        .export-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .export-menu button {
+            width: 100%;
+            padding: 10px 14px;
+            border: none;
+            background: none;
+            color: var(--text-primary);
+            text-align: left;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+        .export-menu button:hover { background: var(--primary-glow); color: var(--primary-color); }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .charts-grid .col-4, .charts-grid .col-6, .charts-grid .col-8 {
+                grid-column: span 6;
+            }
+            .charts-grid .col-12 { grid-column: span 12; }
+        }
+        @media (max-width: 768px) {
+            .content-area { padding: 20px 16px; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .analytics-toolbar { flex-direction: column; align-items: stretch; }
+            .date-range-picker { flex-wrap: wrap; }
+            .charts-grid .col-4, .charts-grid .col-6, .charts-grid .col-8, .charts-grid .col-12 {
+                grid-column: span 12;
+            }
+            .doughnut-container { flex-direction: column; }
+            .perf-grid { grid-template-columns: 1fr; }
+            .realtime-visitors { flex-direction: column; align-items: flex-start; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* Hide protected content until Firebase confirms the admin is logged in */
+        body.auth-pending .sidebar,
+        body.auth-pending .main-content { visibility: hidden; }
+        #authGate {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary, #0f172a);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary, #94a3b8);
+            font-size: 2rem;
+        }
+        body:not(.auth-pending) #authGate { display: none; }
+    </style>
+</head>
+<body class="auth-pending">
+    <div id="authGate"><i class="fas fa-spinner fa-spin"></i></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">Nexora Admin</div></div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar">A</div>
+            <div><div style="font-weight:700;font-size:0.95rem;" id="adminName">Admin</div><div style="font-size:0.8rem;color:var(--text-secondary);">Super Admin</div></div>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="admin-dashboard.html"><span class="sidebar-menu-icon">📊</span> Dashboard</a></li>
+            <li><a href="admin-projects.html"><span class="sidebar-menu-icon">📁</span> Projects</a></li>
+            <li><a href="admin-messages.html"><span class="sidebar-menu-icon">✉️</span> Messages</a></li>
+            <li><a href="admin-users.html"><span class="sidebar-menu-icon">👥</span> Users</a></li>
+            <li><a href="admin-portfolio.html"><span class="sidebar-menu-icon">🎨</span> Portfolio</a></li>
+            <li><a href="admin-blog.html"><span class="sidebar-menu-icon">📝</span> Blog Posts</a></li>
+            <li><a href="admin-gallery.html"><span class="sidebar-menu-icon">🖼️</span> Gallery</a></li>
+            <li><a href="admin-social-media.html"><span class="sidebar-menu-icon">🔗</span> Social Media</a></li>
+            <li><a href="admin-storages.html"><span class="sidebar-menu-icon">💾</span> Storage (128GB)</a></li>
+            <li><a href="admin-analytics.html" class="active"><span class="sidebar-menu-icon">📈</span> Analytics</a></li>
+            <li><a href="admin-logs.html"><span class="sidebar-menu-icon">📋</span> Activity Logs</a></li>
+            <li><a href="admin-settings.html"><span class="sidebar-menu-icon">⚙️</span> Settings</a></li>
+        </ul>
+        <div style="padding: 16px; border-top: 1px solid var(--border-color);">
+            <button onclick="logoutAdmin()" class="btn btn-danger" style="width: 100%;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+                <h1 style="font-size:1.25rem;">Analytics</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <div class="live-badge">Live</div>
+                <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="sidebar-user-avatar" style="width:36px;height:36px;font-size:0.9rem;">A</div>
+                    <span style="font-weight:600;" id="headerAdminName">Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="page-header">
+                <div>
+                    <h1>Analytics Dashboard</h1>
+                    <p style="color:var(--text-secondary);">Track your portfolio performance in real-time</p>
+                </div>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <button class="refresh-btn" id="refreshBtn" onclick="refreshData()" title="Refresh Data">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <div class="export-dropdown">
+                        <button class="btn btn-primary" onclick="toggleExportMenu()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <div class="export-menu" id="exportMenu">
+                            <button onclick="exportData('csv')"><i class="fas fa-file-csv"></i> Export CSV</button>
+                            <button onclick="exportData('json')"><i class="fas fa-file-code"></i> Export JSON</button>
+                            <button onclick="exportData('pdf')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Visitors -->
+            <div class="realtime-visitors">
+                <div class="realtime-count" id="liveVisitors">—</div>
+                <div class="realtime-info">
+                    <h4>Active Visitors</h4>
+                    <p>Currently viewing your portfolio</p>
+                </div>
+                <div class="realtime-pages" id="realtimePages"></div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon blue"><i class="fas fa-eye"></i></div>
+                    </div>
+                    <div class="stat-value" id="pageViews">0</div>
+                    <div class="stat-label">Page Views</div>
+                    <div class="stat-sparkline" id="sparklineViews"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon green"><i class="fas fa-user"></i></div>
+                    </div>
+                    <div class="stat-value" id="uniqueVisitors">0</div>
+                    <div class="stat-label">Total Visitors</div>
+                    <div class="stat-sparkline" id="sparklineVisitors"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+                    </div>
+                    <div class="stat-value" id="avgSession">—</div>
+                    <div class="stat-label">Avg. Session (not tracked)</div>
+                    <div class="stat-sparkline" id="sparklineSession"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon red"><i class="fas fa-percentage"></i></div>
+                    </div>
+                    <div class="stat-value" id="bounceRate">—</div>
+                    <div class="stat-label">Bounce Rate (not tracked)</div>
+                    <div class="stat-sparkline" id="sparklineBounce"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon purple"><i class="fas fa-mouse-pointer"></i></div>
+                    </div>
+                    <div class="stat-value" id="totalClicks">—</div>
+                    <div class="stat-label">Total Clicks (not tracked)</div>
+                    <div class="stat-sparkline" id="sparklineClicks"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon teal"><i class="fas fa-envelope"></i></div>
+                    </div>
+                    <div class="stat-value" id="formSubmissions">0</div>
+                    <div class="stat-label">Form Submissions</div>
+                    <div class="stat-sparkline" id="sparklineForms"></div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="analytics-toolbar">
+                <div class="date-range-picker">
+                    <button class="date-btn active" onclick="setDateRange(7)" id="btn7">7 Days</button>
+                    <button class="date-btn" onclick="setDateRange(30)" id="btn30">30 Days</button>
+                    <button class="date-btn" onclick="setDateRange(90)" id="btn90">90 Days</button>
+                    <button class="date-btn" onclick="setDateRange(365)" id="btn365">1 Year</button>
+                </div>
+                <div style="font-size:0.85rem;color:var(--text-secondary);" id="lastUpdated">
+                    Last updated: Just now
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <!-- Main Line Chart -->
+                <div class="chart-card col-8">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-line"></i> Visitors Over Time</h3>
+                        <div class="chart-actions">
+                            <button class="chart-action-btn" onclick="toggleChartType('line')" title="Line"><i class="fas fa-chart-line"></i></button>
+                            <button class="chart-action-btn" onclick="toggleChartType('bar')" title="Bar"><i class="fas fa-chart-bar"></i></button>
+                            <button class="chart-action-btn" onclick="toggleChartType('area')" title="Area"><i class="fas fa-chart-area"></i></button>
+                        </div>
+                    </div>
+                    <div class="chart-body" id="mainChartContainer">
+                        <svg class="svg-chart" id="mainChart" viewBox="0 0 700 250"></svg>
+                        <div class="chart-tooltip" id="mainTooltip"></div>
+                    </div>
+                </div>
+
+                <!-- Traffic Sources Doughnut -->
+                <div class="chart-card col-4">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-pie-chart"></i> Traffic Sources</h3>
+                    </div>
+                    <div class="chart-body" id="trafficChartBody">
+                        <div class="doughnut-container">
+                            <div class="doughnut-chart">
+                                <svg viewBox="0 0 200 200" width="200" height="200" id="trafficDoughnut"></svg>
+                                <div class="doughnut-center">
+                                    <div class="value" id="trafficTotal">100%</div>
+                                    <div class="label">Total</div>
+                                </div>
+                            </div>
+                            <div class="doughnut-legend" id="trafficLegend"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Device Breakdown -->
+                <div class="chart-card col-4">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-desktop"></i> Device Breakdown</h3>
+                    </div>
+                    <div class="chart-body" id="deviceChartBody">
+                        <div class="doughnut-container">
+                            <div class="doughnut-chart">
+                                <svg viewBox="0 0 200 200" width="200" height="200" id="deviceDoughnut"></svg>
+                                <div class="doughnut-center">
+                                    <div class="value" id="deviceTotal">100%</div>
+                                    <div class="label">Sessions</div>
+                                </div>
+                            </div>
+                            <div class="doughnut-legend" id="deviceLegend"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Countries -->
+                <div class="chart-card col-4">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-globe"></i> Top Countries</h3>
+                    </div>
+                    <div class="chart-body">
+                        <div class="progress-list" id="countriesList"></div>
+                    </div>
+                </div>
+
+                <!-- Browser Stats -->
+                <div class="chart-card col-4">
+                    <div class="chart-header">
+                        <h3><i class="fab fa-chrome"></i> Browsers</h3>
+                    </div>
+                    <div class="chart-body">
+                        <div class="progress-list" id="browsersList"></div>
+                    </div>
+                </div>
+
+                <!-- Conversion Funnel -->
+                <div class="chart-card col-6">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-filter"></i> Conversion Funnel</h3>
+                    </div>
+                    <div class="chart-body">
+                        <div class="funnel-container" id="funnelContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="chart-card col-6">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-tachometer-alt"></i> Core Web Vitals</h3>
+                    </div>
+                    <div class="chart-body">
+                        <div class="perf-grid" id="perfGrid"></div>
+                    </div>
+                </div>
+
+                <!-- Top Pages -->
+                <div class="chart-card col-12">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-list-ol"></i> Top Pages</h3>
+                    </div>
+                    <div class="chart-body">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:60px;">Rank</th>
+                                    <th>Page</th>
+                                    <th>Views</th>
+                                    <th>Unique</th>
+                                    <th>Avg. Time</th>
+                                    <th>Bounce Rate</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topPagesTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="toast-container"></div>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="firebase-common.js"></script>
+    <script>
+        let currentRange = 7;
+        let currentChartType = 'line';
+        let analyticsData = null;
+        let refreshInterval = null;
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            var overlay = document.getElementById('mobileNavOverlay');
+            if (overlay) {
+                overlay.classList.toggle('active');
+            }
+        }
+
+        const CHART_PALETTE = ['#3b82f6', '#a855f7', '#22c55e', '#f97316', '#94a3b8', '#ef4444', '#14b8a6'];
+
+        // Converts a real tally object (e.g. {mobile: 12, desktop: 8}) into
+        // the {name, value, color} shape the doughnut/progress renderers
+        // expect, with value as a real percentage of the real total.
+        function objectToChartData(obj, colorMap = {}, labelMap = {}) {
+            const entries = Object.entries(obj || {}).filter(([, v]) => v > 0);
+            const total = entries.reduce((sum, [, v]) => sum + v, 0);
+            if (total === 0) return [];
+            return entries
+                .sort((a, b) => b[1] - a[1])
+                .map(([key, val], i) => ({
+                    name: labelMap[key] || key,
+                    value: Math.round((val / total) * 100),
+                    color: colorMap[key] || CHART_PALETTE[i % CHART_PALETTE.length]
+                }));
+        }
+
+        // Browsers aren't tracked in analytics directly, but every real
+        // visitor record carries a genuine userAgent string — so we can
+        // derive a real (not invented) browser breakdown from that.
+        function detectBrowser(ua) {
+            if (!ua) return 'Unknown';
+            if (/Edg\//.test(ua)) return 'Edge';
+            if (/Firefox\//.test(ua)) return 'Firefox';
+            if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) return 'Chrome';
+            if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) return 'Safari';
+            return 'Other';
+        }
+
+        function tallyBrowsers(users) {
+            const tally = {};
+            users.forEach(u => {
+                const b = detectBrowser(u.userAgent || '');
+                tally[b] = (tally[b] || 0) + 1;
+            });
+            return tally;
+        }
+
+        async function loadAnalytics() {
+            try {
+                const [dbData, users, messages, daily] = await Promise.all([
+                    DB.getAnalytics(),
+                    DB.getUsers(),
+                    DB.getMessages(),
+                    DB.getDailyVisits(currentRange)
+                ]);
+
+                const pageViews = dbData.pageViews || {};
+                const totalPageViews = Object.values(pageViews).reduce((a, b) => a + b, 0);
+
+                analyticsData = {
+                    visitors: dbData.totalVisitors || 0,
+                    pageViews: totalPageViews,
+                    formSubmissions: messages.length,
+                    daily: daily.map(d => ({ date: d.label, fullDate: d.date, visitors: d.count })),
+                    devices: objectToChartData(dbData.deviceBreakdown || {}, {}, { mobile: 'Mobile', desktop: 'Desktop', tablet: 'Tablet' }),
+                    countries: objectToChartData(dbData.countries || {}),
+                    browsers: objectToChartData(tallyBrowsers(users)),
+                    pages: Object.entries(pageViews)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([path, views]) => ({ path, views }))
+                };
+
+                updateStats();
+                renderMainChart();
+                renderTrafficSources(); // not tracked yet — shows an honest message
+                renderDoughnutOrEmpty('deviceChartBody', 'deviceDoughnut', 'deviceLegend', 'deviceTotal', analyticsData.devices, 'Sessions');
+                renderProgressListOrEmpty('countriesList', analyticsData.countries);
+                renderProgressListOrEmpty('browsersList', analyticsData.browsers);
+                renderFunnel();
+                renderPerformance();
+                renderTopPages();
+                renderSparklines();
+                updateLastUpdated();
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                showToast('Error loading analytics', 'error');
+            }
+        }
+
+        function updateStats() {
+            animateValue('pageViews', 0, analyticsData.pageViews, 1000);
+            animateValue('uniqueVisitors', 0, analyticsData.visitors, 1000);
+            document.getElementById('avgSession').textContent = 'N/A';
+            document.getElementById('bounceRate').textContent = 'N/A';
+            document.getElementById('totalClicks').textContent = 'N/A';
+            animateValue('formSubmissions', 0, analyticsData.formSubmissions, 1000);
+        }
+
+        // Traffic-source categorization (Direct/Social/Search/Referral) isn't
+        // implemented — the site only stores a raw referrer string, never
+        // bucketed into categories — so show an honest message rather than
+        // invented percentages.
+        function renderTrafficSources() {
+            const el = document.getElementById('trafficChartBody');
+            if (!el) return;
+            el.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Traffic-source categorization isn\'t set up yet.</p>';
+        }
+
+        function renderDoughnutOrEmpty(bodyId, svgId, legendId, totalId, data, unitLabel) {
+            const body = document.getElementById(bodyId);
+            if (!body) return;
+
+            if (!data || data.length === 0) {
+                body.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">No data yet</p>';
+                return;
+            }
+
+            // Rebuild the doughnut skeleton fresh every time — a previous
+            // empty-state render replaces this container's contents entirely,
+            // so the svg/legend/total elements can't be assumed to still
+            // exist from an earlier render.
+            body.innerHTML = `
+                <div class="doughnut-container">
+                    <div class="doughnut-chart">
+                        <svg viewBox="0 0 200 200" width="200" height="200" id="${svgId}"></svg>
+                        <div class="doughnut-center">
+                            <div class="value" id="${totalId}">100%</div>
+                            <div class="label">${unitLabel}</div>
+                        </div>
+                    </div>
+                    <div class="doughnut-legend" id="${legendId}"></div>
+                </div>
+            `;
+            renderDoughnut(svgId, legendId, totalId, data);
+        }
+
+        function renderProgressListOrEmpty(containerId, data) {
+            if (!data || data.length === 0) {
+                document.getElementById(containerId).innerHTML =
+                    '<p style="color:var(--text-muted);text-align:center;">No data yet</p>';
+                return;
+            }
+            renderProgressList(containerId, data);
+        }
+
+        function animateValue(id, start, end, duration) {
+            const el = document.getElementById(id);
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= end) {
+                    current = end;
+                    clearInterval(timer);
+                }
+                el.textContent = Math.floor(current).toLocaleString();
+            }, 16);
+        }
+
+        function renderSparklines() {
+            // Only "visitors" has real per-day history (via DB.getDailyVisits).
+            // Page views, session length, bounce, clicks, and forms aren't
+            // tracked per-day, so their sparklines are cleared rather than
+            // filled with invented numbers.
+            ['sparklineViews', 'sparklineSession', 'sparklineBounce', 'sparklineClicks', 'sparklineForms'].forEach(id => {
+                const container = document.getElementById(id);
+                if (container) container.innerHTML = '';
+            });
+
+            const data = analyticsData.daily.map(d => d.visitors);
+            const container = document.getElementById('sparklineVisitors');
+            if (!container || data.length === 0) return;
+
+            const max = Math.max(...data);
+            const min = Math.min(...data);
+            const range = max - min || 1;
+            const width = 100;
+            const height = 40;
+            const points = data.map((v, i) => {
+                const x = (i / (data.length - 1 || 1)) * width;
+                const y = height - ((v - min) / range) * height;
+                return `${x},${y}`;
+            }).join(' ');
+
+            container.innerHTML = `
+                <svg viewBox="0 0 100 40" preserveAspectRatio="none">
+                    <polyline points="${points}" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+                    <polygon points="0,40 ${points} 100,40" fill="#22c55e" opacity="0.1"/>
+                </svg>
+            `;
+        }
+
+        function renderMainChart() {
+            const svg = document.getElementById('mainChart');
+            const data = analyticsData.daily;
+            const width = 700;
+            const height = 250;
+            const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+            const chartW = width - padding.left - padding.right;
+            const chartH = height - padding.top - padding.bottom;
+
+            // Math.max(..., 1) guards against maxVal being 0 when there are
+            // genuinely zero visitors yet — dividing by 0 below would produce
+            // NaN coordinates and break the whole polyline/circles.
+            const maxVal = Math.max(...data.map(d => d.visitors), 1) * 1.1;
+            const minVal = 0;
+
+            // Grid lines
+            let gridLines = '';
+            for (let i = 0; i <= 5; i++) {
+                const y = padding.top + (chartH / 5) * i;
+                const val = Math.round(maxVal - (maxVal / 5) * i);
+                gridLines += `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" class="grid-line"/>
+                    <text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" class="axis-text">${val}</text>`;
+            }
+
+            // Data points
+            const points = data.map((d, i) => {
+                const x = padding.left + (i / (data.length - 1)) * chartW;
+                const y = padding.top + chartH - (d.visitors / maxVal) * chartH;
+                return { x, y, data: d };
+            });
+
+            let pathD = '';
+            let areaD = '';
+
+            if (currentChartType === 'bar') {
+                const barW = chartW / data.length * 0.6;
+                let bars = '';
+                points.forEach((p, i) => {
+                    const barH = chartH - (p.y - padding.top);
+                    bars += `<rect x="${p.x - barW/2}" y="${p.y}" width="${barW}" height="${barH}" 
+                        fill="url(#barGradient)" rx="4" class="chart-bar"
+                        onmouseenter="showTooltip(event, '${p.data.date}', ${p.data.visitors})"
+                        onmouseleave="hideTooltip()"/>`;
+                });
+
+                svg.innerHTML = `
+                    <defs>
+                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#3b82f6"/>
+                            <stop offset="100%" stop-color="#6366f1"/>
+                        </linearGradient>
+                    </defs>
+                    ${gridLines}
+                    ${bars}
+                    ${points.map((p, i) => `<text x="${p.x}" y="${height - 10}" text-anchor="middle" class="axis-text" style="font-size:10px;">${p.data.date}</text>`).join('')}
+                `;
+            } else {
+                const linePoints = points.map(p => `${p.x},${p.y}`).join(' ');
+                areaD = `${padding.left},${padding.top + chartH} ${linePoints} ${width - padding.right},${padding.top + chartH}`;
+
+                let circles = '';
+                points.forEach((p, i) => {
+                    circles += `<circle cx="${p.x}" cy="${p.y}" class="chart-point" stroke="#3b82f6"
+                        onmouseenter="showTooltip(event, '${p.data.date}', ${p.data.visitors})"
+                        onmouseleave="hideTooltip()"/>`;
+                });
+
+                svg.innerHTML = `
+                    <defs>
+                        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
+                            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    ${gridLines}
+                    ${currentChartType === 'area' ? `<polygon points="${areaD}" fill="url(#areaGradient)"/>` : ''}
+                    <polyline points="${linePoints}" class="chart-line" stroke="#3b82f6"/>
+                    ${circles}
+                    ${points.map((p, i) => `<text x="${p.x}" y="${height - 10}" text-anchor="middle" class="axis-text" style="font-size:10px;">${p.data.date}</text>`).join('')}
+                `;
+            }
+        }
+
+        function showTooltip(event, label, value) {
+            const tooltip = document.getElementById('mainTooltip');
+            const rect = event.target.getBoundingClientRect();
+            const container = document.getElementById('mainChartContainer').getBoundingClientRect();
+            tooltip.innerHTML = `<strong>${label}</strong><br>${value.toLocaleString()} visitors`;
+            tooltip.style.left = (rect.left - container.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
+            tooltip.style.top = (rect.top - container.top - tooltip.offsetHeight - 10) + 'px';
+            tooltip.classList.add('active');
+        }
+
+        function hideTooltip() {
+            document.getElementById('mainTooltip').classList.remove('active');
+        }
+
+        function toggleChartType(type) {
+            currentChartType = type;
+            renderMainChart();
+        }
+
+        function renderDoughnut(svgId, legendId, totalId, data) {
+            const svg = document.getElementById(svgId);
+            const total = data.reduce((a, b) => a + b.value, 0);
+            document.getElementById(totalId).textContent = total + '%';
+
+            let currentAngle = 0;
+            let paths = '';
+            const cx = 100, cy = 100, r = 80, innerR = 55;
+
+            data.forEach(item => {
+                const angle = (item.value / total) * 360;
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + angle;
+
+                const x1 = cx + r * Math.cos((startAngle - 90) * Math.PI / 180);
+                const y1 = cy + r * Math.sin((startAngle - 90) * Math.PI / 180);
+                const x2 = cx + r * Math.cos((endAngle - 90) * Math.PI / 180);
+                const y2 = cy + r * Math.sin((endAngle - 90) * Math.PI / 180);
+                const x3 = cx + innerR * Math.cos((endAngle - 90) * Math.PI / 180);
+                const y3 = cy + innerR * Math.sin((endAngle - 90) * Math.PI / 180);
+                const x4 = cx + innerR * Math.cos((startAngle - 90) * Math.PI / 180);
+                const y4 = cy + innerR * Math.sin((startAngle - 90) * Math.PI / 180);
+
+                const largeArc = angle > 180 ? 1 : 0;
+                paths += `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x4} ${y4} Z" 
+                    fill="${item.color}" stroke="var(--bg-card)" stroke-width="3" style="transition:all 0.3s ease;cursor:pointer;"
+                    onmouseenter="this.style.opacity='0.8';this.style.transform='scale(1.02)';this.style.transformOrigin='${cx}px ${cy}px'"
+                    onmouseleave="this.style.opacity='1';this.style.transform='scale(1)'"/>`;
+
+                currentAngle += angle;
+            });
+
+            svg.innerHTML = paths;
+
+            document.getElementById(legendId).innerHTML = data.map(item => `
+                <div class="legend-item">
+                    <div class="legend-color" style="background:${item.color}"></div>
+                    <div class="legend-info">
+                        <div class="name">${item.name}</div>
+                        <div class="percent">${item.value}%</div>
+                    </div>
+                    <div class="legend-value">${Math.floor(total * item.value / 100)}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderProgressList(containerId, data) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = data.map(item => `
+                <div class="progress-item">
+                    <span class="progress-label">${item.name}</span>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" style="width:0%;background:${item.color};" data-width="${item.value}%"></div>
+                    </div>
+                    <span class="progress-value">${item.value}%</span>
+                </div>
+            `).join('');
+
+            // Animate bars
+            setTimeout(() => {
+                container.querySelectorAll('.progress-bar-fill').forEach(bar => {
+                    bar.style.width = bar.dataset.width;
+                });
+            }, 100);
+        }
+
+        // Conversion funnel tracking (homepage → projects → contact → submit)
+        // isn't instrumented anywhere on the public site yet, so there's no
+        // real data to show here. Say so honestly instead of showing invented
+        // conversion percentages.
+        function renderFunnel() {
+            const container = document.getElementById('funnelContainer');
+            container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Funnel tracking isn\'t set up yet — this needs step-by-step visitor tracking added to the site.</p>';
+        }
+
+        // Core Web Vitals (LCP/FID/CLS) require real browser performance
+        // instrumentation (e.g. the web-vitals library reporting back to
+        // Firebase) that doesn't exist yet — so this shows an honest
+        // placeholder instead of invented scores.
+        function renderPerformance() {
+            const container = document.getElementById('perfGrid');
+            container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;grid-column:1/-1;">Performance monitoring isn\'t set up yet — this needs real browser metrics reporting added to the site.</p>';
+        }
+
+        function renderTopPages() {
+            const tbody = document.getElementById('topPagesTable');
+            if (!analyticsData.pages || analyticsData.pages.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;">No page-view data yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = analyticsData.pages.map((page, i) => {
+                let rankClass = 'normal';
+                if (i === 0) rankClass = 'gold';
+                else if (i === 1) rankClass = 'silver';
+                else if (i === 2) rankClass = 'bronze';
+
+                return `
+                    <tr>
+                        <td><div class="page-rank ${rankClass}">${i + 1}</div></td>
+                        <td><span class="page-path">${escapeHtml(page.path)}</span></td>
+                        <td class="page-views">${page.views.toLocaleString()}</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function setDateRange(days) {
+            currentRange = days;
+            document.querySelectorAll('.date-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn' + days).classList.add('active');
+            loadAnalytics();
+            showToast(`Showing data for last ${days} days`, 'success');
+        }
+
+        function refreshData() {
+            const btn = document.getElementById('refreshBtn');
+            btn.classList.add('spinning');
+            loadAnalytics().then(() => {
+                setTimeout(() => btn.classList.remove('spinning'), 500);
+                showToast('Data refreshed', 'success');
+            });
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = 'Last updated: ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Live visitor presence isn't implemented yet (would need a real-time
+        // Firebase presence system with onDisconnect handlers). Rather than
+        // fake a "live" count with Math.random(), say so honestly.
+        function updateLiveVisitors() {
+            document.getElementById('liveVisitors').textContent = '—';
+            document.getElementById('realtimePages').innerHTML =
+                '<p style="color:var(--text-muted);font-size:0.85rem;">Real-time visitor tracking isn\'t set up yet.</p>';
+        }
+
+        // Export
+        function toggleExportMenu() {
+            document.getElementById('exportMenu').classList.toggle('active');
+        }
+
+        function exportData(format) {
+            document.getElementById('exportMenu').classList.remove('active');
+
+            if (format === 'json') {
+                const blob = new Blob([JSON.stringify(analyticsData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `analytics-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else if (format === 'csv') {
+                const headers = ['Date', 'Visitors'];
+                const rows = analyticsData.daily.map(d => [d.date, d.visitors]);
+                const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `analytics-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else {
+                showToast('PDF export coming soon!', 'info');
+                return;
+            }
+            showToast(`Analytics exported as ${format.toUpperCase()}`, 'success');
+        }
+
+        // Close export menu on click outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.export-dropdown')) {
+                document.getElementById('exportMenu').classList.remove('active');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await checkAuth(); // redirects to admin-login.html if not signed in
+            if (!user) return;
+
+            const adminName = getAdminEmail().split('@')[0];
+            document.getElementById('adminName').textContent = adminName;
+            document.getElementById('headerAdminName').textContent = adminName;
+
+            loadAnalytics();
+            updateLiveVisitors();
+            initMobileMenu();
+
+            // Refresh the (honest) live-visitor placeholder and timestamp periodically
+            refreshInterval = setInterval(() => {
+                updateLiveVisitors();
+                updateLastUpdated();
+            }, 30000);
+        });
+    </script>
+
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleSidebar()"></div>
+</body>
+</html>

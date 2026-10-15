@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Team | Admin Panel</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .content-area { padding: 32px; }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .page-header h1 { font-size: 1.75rem; letter-spacing: -0.02em; }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: var(--radius);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+            background: rgba(37,99,235,0.1);
+            color: var(--primary-color);
+        }
+        .stat-info h4 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+        .stat-info p { font-size: 0.85rem; color: var(--text-secondary); }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+        .team-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 28px 24px;
+            text-align: center;
+            transition: var(--transition);
+            position: relative;
+        }
+        .team-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+        }
+        .team-photo {
+            width: 88px; height: 88px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 2rem; font-weight: 700;
+        }
+        .team-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+        .team-role { color: var(--primary-color); font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; }
+        .team-bio { color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin-bottom: 16px; }
+        .team-socials { display: flex; justify-content: center; gap: 10px; margin-bottom: 16px; }
+        .team-socials a {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: var(--bg-elevated);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        .team-socials a:hover { background: var(--primary-color); color: white; }
+        .team-actions { display: flex; gap: 8px; justify-content: center; }
+
+        .empty-state {
+            grid-column: 1/-1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 16px; display: block; opacity: 0.5; }
+
+        /* Photo upload */
+        .image-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+        .image-upload-area:hover, .image-upload-area.drag-over {
+            border-color: var(--primary-color);
+            background: rgba(37,99,235,0.05);
+        }
+        .image-upload-area i { font-size: 2rem; color: var(--text-secondary); margin-bottom: 8px; }
+        .image-upload-area p { font-size: 0.9rem; color: var(--text-secondary); }
+        .image-preview {
+            display: none;
+            max-width: 120px;
+            border-radius: 50%;
+            margin: 12px auto 0;
+        }
+        .image-preview.active { display: block; }
+        .image-upload-progress {
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            margin-top: 8px;
+            display: none;
+        }
+        .image-upload-progress.active { display: block; }
+
+        @media (max-width: 768px) {
+            .content-area { padding: 20px 16px; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .team-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Hide protected content until Firebase confirms the admin is logged in */
+        body.auth-pending .sidebar,
+        body.auth-pending .main-content { visibility: hidden; }
+        #authGate {
+            position: fixed; inset: 0;
+            background: var(--bg-dark, #0f172a);
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary, #94a3b8);
+            font-size: 2rem;
+        }
+        body:not(.auth-pending) #authGate { display: none; }
+    </style>
+</head>
+<body class="auth-pending">
+    <div id="authGate"><i class="fas fa-spinner fa-spin"></i></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">Nexora Admin</div>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar" id="sidebarAvatar">A</div>
+            <div>
+                <div style="font-weight:700;font-size:0.95rem;" id="adminName">Admin</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);">Super Admin</div>
+            </div>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="admin-dashboard.html"><span class="sidebar-menu-icon">📊</span> Dashboard</a></li>
+            <li><a href="admin-projects.html"><span class="sidebar-menu-icon">📁</span> Projects</a></li>
+            <li><a href="admin-team.html" class="active"><span class="sidebar-menu-icon">🧑‍💼</span> Team</a></li>
+            <li><a href="admin-messages.html"><span class="sidebar-menu-icon">✉️</span> Messages</a></li>
+            <li><a href="admin-users.html"><span class="sidebar-menu-icon">👥</span> Users</a></li>
+            <li><a href="admin-portfolio.html"><span class="sidebar-menu-icon">🎨</span> Portfolio</a></li>
+            <li><a href="admin-blog.html"><span class="sidebar-menu-icon">📝</span> Blog Posts</a></li>
+            <li><a href="admin-gallery.html"><span class="sidebar-menu-icon">🖼️</span> Gallery</a></li>
+            <li><a href="admin-social-media.html"><span class="sidebar-menu-icon">🔗</span> Social Media</a></li>
+            <li><a href="admin-storages.html"><span class="sidebar-menu-icon">💾</span> Storage (128GB)</a></li>
+            <li><a href="admin-analytics.html"><span class="sidebar-menu-icon">📈</span> Analytics</a></li>
+            <li><a href="admin-logs.html"><span class="sidebar-menu-icon">📋</span> Activity Logs</a></li>
+            <li><a href="admin-settings.html"><span class="sidebar-menu-icon">⚙️</span> Settings</a></li>
+        </ul>
+        <div style="padding: 16px; border-top: 1px solid var(--border-color);">
+            <button onclick="logoutAdmin()" class="btn btn-danger" style="width: 100%;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+                <h1 style="font-size:1.25rem;">Team</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="sidebar-user-avatar" style="width:36px;height:36px;font-size:0.9rem;" id="headerAvatar">A</div>
+                    <span style="font-weight:600;" id="headerAdminName">Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="page-header">
+                <div>
+                    <h1>Team Directory</h1>
+                    <p style="color:var(--text-secondary);">Manage who appears on your "Our Team" section — a directory only, not an access-control system (see note below).</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <i class="fas fa-plus"></i> Add Team Member
+                </button>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-info">
+                        <h4 id="totalMembers">0</h4>
+                        <p>Team Members</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 24px; font-size: 0.88rem; color: var(--text-secondary);">
+                <i class="fas fa-info-circle" style="color: var(--warning-color); margin-right: 8px;"></i>
+                This is a public-facing team directory only. Adding someone here does <strong>not</strong> give them admin login access, and it does not restrict what any logged-in admin can do — real permission levels would need backend infrastructure (Firebase Cloud Functions + Security Rules) beyond this project's current setup.
+            </div>
+
+            <div class="team-grid" id="teamGrid">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="teamModal">
+        <div class="modal" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Add Team Member</h3>
+                <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="teamForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Photo</label>
+                        <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('memberPhoto').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Click to upload or drag & drop</p>
+                            <img class="image-preview" id="imagePreview" alt="Preview">
+                            <div class="image-upload-progress" id="imageUploadProgress"></div>
+                        </div>
+                        <input type="file" id="memberPhoto" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-input" id="memberName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Role / Title *</label>
+                        <input type="text" class="form-input" id="memberRole" placeholder="e.g. Lead Developer" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Short Bio</label>
+                        <textarea class="form-input" id="memberBio" rows="3" placeholder="A sentence or two about this person"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="memberEmail" placeholder="name@nexoratechnologies.com">
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="form-group">
+                            <label class="form-label">LinkedIn URL</label>
+                            <input type="url" class="form-input" id="memberLinkedin" placeholder="https://linkedin.com/in/...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Twitter/X URL</label>
+                            <input type="url" class="form-input" id="memberTwitter" placeholder="https://x.com/...">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">GitHub URL</label>
+                        <input type="url" class="form-input" id="memberGithub" placeholder="https://github.com/...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Display Order</label>
+                        <input type="number" class="form-input" id="memberOrder" value="0" min="0">
+                        <small style="color:var(--text-secondary);">Lower numbers appear first on the public site.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="firebase-common.js"></script>
+    <script>
+        let allMembers = [];
+        let editingId = null;
+        let uploadedImage = null;
+        let imageUploading = false;
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            const overlay = document.getElementById('mobileNavOverlay');
+            if (overlay) overlay.classList.toggle('active');
+        }
+
+        async function loadTeam() {
+            try {
+                allMembers = await DB.getTeamMembers();
+                renderTeam();
+                document.getElementById('totalMembers').textContent = allMembers.length;
+            } catch (error) {
+                console.error('Error loading team:', error);
+                showToast('Error loading team members', 'error');
+            }
+        }
+
+        function renderTeam() {
+            const grid = document.getElementById('teamGrid');
+            if (allMembers.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>No team members yet. Click "Add Team Member" to get started.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = allMembers.map(m => `
+                <div class="team-card">
+                    ${m.photo
+                        ? `<img class="team-photo" src="${m.photo}" alt="${escapeHtml(m.name)}">`
+                        : `<div class="team-photo">${escapeHtml((m.name || '?').charAt(0).toUpperCase())}</div>`
+                    }
+                    <div class="team-name">${escapeHtml(m.name)}</div>
+                    <div class="team-role">${escapeHtml(m.role)}</div>
+                    ${m.bio ? `<div class="team-bio">${escapeHtml(m.bio)}</div>` : ''}
+                    <div class="team-socials">
+                        ${m.linkedin ? `<a href="${m.linkedin}" target="_blank" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>` : ''}
+                        ${m.twitter ? `<a href="${m.twitter}" target="_blank" title="Twitter/X"><i class="fab fa-twitter"></i></a>` : ''}
+                        ${m.github ? `<a href="${m.github}" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>` : ''}
+                        ${m.email ? `<a href="mailto:${m.email}" title="Email"><i class="fas fa-envelope"></i></a>` : ''}
+                    </div>
+                    <div class="team-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="editMember('${m.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteMember('${m.id}')"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Add Team Member';
+            document.getElementById('teamForm').reset();
+            document.getElementById('imagePreview').classList.remove('active');
+            document.getElementById('imageUploadProgress').classList.remove('active');
+            uploadedImage = null;
+            imageUploading = false;
+            document.getElementById('teamModal').classList.add('active');
+        }
+
+        function editMember(id) {
+            const member = allMembers.find(m => m.id === id);
+            if (!member) return;
+            editingId = id;
+            document.getElementById('modalTitle').textContent = 'Edit Team Member';
+            document.getElementById('memberName').value = member.name || '';
+            document.getElementById('memberRole').value = member.role || '';
+            document.getElementById('memberBio').value = member.bio || '';
+            document.getElementById('memberEmail').value = member.email || '';
+            document.getElementById('memberLinkedin').value = member.linkedin || '';
+            document.getElementById('memberTwitter').value = member.twitter || '';
+            document.getElementById('memberGithub').value = member.github || '';
+            document.getElementById('memberOrder').value = member.order || 0;
+
+            const preview = document.getElementById('imagePreview');
+            document.getElementById('imageUploadProgress').classList.remove('active');
+            imageUploading = false;
+            if (member.photo) {
+                preview.src = member.photo;
+                preview.classList.add('active');
+                uploadedImage = member.photo;
+            } else {
+                preview.classList.remove('active');
+                uploadedImage = null;
+            }
+
+            document.getElementById('teamModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('teamModal').classList.remove('active');
+            editingId = null;
+            uploadedImage = null;
+            imageUploading = false;
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Image too large. Max 5MB allowed.', 'error');
+                event.target.value = '';
+                return;
+            }
+
+            const preview = document.getElementById('imagePreview');
+            const progress = document.getElementById('imageUploadProgress');
+            const submitBtn = document.querySelector('#teamForm button[type="submit"]');
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.classList.add('active');
+            };
+            reader.readAsDataURL(file);
+
+            imageUploading = true;
+            if (submitBtn) submitBtn.disabled = true;
+            progress.textContent = 'Uploading... 0%';
+            progress.classList.add('active');
+
+            DB.uploadFile(file, 'team', (pct) => {
+                progress.textContent = `Uploading... ${pct}%`;
+            }).then((url) => {
+                uploadedImage = url;
+                imageUploading = false;
+                if (submitBtn) submitBtn.disabled = false;
+                progress.textContent = 'Uploaded';
+                setTimeout(() => progress.classList.remove('active'), 1500);
+            }).catch((error) => {
+                console.error('Image upload error:', error);
+                imageUploading = false;
+                if (submitBtn) submitBtn.disabled = false;
+                progress.textContent = 'Upload failed — try again';
+                showToast('Image upload failed. Please try again.', 'error');
+            });
+        }
+
+        document.getElementById('teamForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (imageUploading) {
+                showToast('Please wait for the photo to finish uploading', 'warning');
+                return;
+            }
+
+            const member = {
+                name: document.getElementById('memberName').value.trim(),
+                role: document.getElementById('memberRole').value.trim(),
+                bio: document.getElementById('memberBio').value.trim(),
+                email: document.getElementById('memberEmail').value.trim(),
+                linkedin: document.getElementById('memberLinkedin').value.trim(),
+                twitter: document.getElementById('memberTwitter').value.trim(),
+                github: document.getElementById('memberGithub').value.trim(),
+                order: parseInt(document.getElementById('memberOrder').value) || 0,
+                photo: uploadedImage || undefined
+            };
+
+            try {
+                if (editingId) {
+                    await DB.updateTeamMember(editingId, member);
+                    showToast('Team member updated!', 'success');
+                    await DB.addLog({ type: 'update', title: 'Team Member Updated', description: `"${member.name}" was updated`, time: 'Just now' });
+                } else {
+                    await DB.addTeamMember(member);
+                    showToast('Team member added!', 'success');
+                    await DB.addLog({ type: 'create', title: 'Team Member Added', description: `"${member.name}" was added`, time: 'Just now' });
+                }
+                closeModal();
+                loadTeam();
+            } catch (error) {
+                console.error(error);
+                showToast('Error saving team member', 'error');
+            }
+        });
+
+        function deleteMember(id) {
+            const member = allMembers.find(m => m.id === id);
+            showConfirm(
+                'Delete Team Member',
+                `Remove "${member?.name || 'this person'}" from the team directory? This cannot be undone.`,
+                async () => {
+                    try {
+                        await DB.deleteTeamMember(id);
+                        showToast('Team member removed', 'success');
+                        await DB.addLog({ type: 'delete', title: 'Team Member Removed', description: `"${member?.name || 'Unknown'}" was removed`, time: 'Just now' });
+                        loadTeam();
+                    } catch (error) {
+                        console.error(error);
+                        showToast('Error removing team member', 'error');
+                    }
+                }
+            );
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('teamModal').classList.contains('active')) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await checkAuth(); // redirects to admin-login.html if not signed in
+            if (!user) return;
+
+            const adminName = getAdminEmail().split('@')[0];
+            document.getElementById('adminName').textContent = adminName;
+            document.getElementById('headerAdminName').textContent = adminName;
+            document.getElementById('sidebarAvatar').textContent = adminName.charAt(0).toUpperCase();
+            document.getElementById('headerAvatar').textContent = adminName.charAt(0).toUpperCase();
+
+            loadTeam();
+            initMobileMenu();
+        });
+    </script>
+
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleSidebar()"></div>
+</body>
+</html>

@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Storage (128GB) | Admin Panel</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .content-area { padding: 32px; }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .storage-overview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .storage-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .storage-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+        .storage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .storage-header h3 {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .storage-header h3 i {
+            color: var(--primary-color);
+        }
+        .storage-capacity {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+        .storage-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+        .storage-bar-container {
+            margin: 20px 0;
+        }
+        .storage-bar-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .storage-bar {
+            width: 100%;
+            height: 16px;
+            background: var(--bg-dark);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+        .storage-bar-fill {
+            height: 100%;
+            border-radius: var(--radius-full);
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            transition: width 1s ease;
+            position: relative;
+        }
+        .storage-bar-fill::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        .storage-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .storage-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: var(--radius-sm);
+        }
+        .storage-detail-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+        .storage-detail-info h4 {
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+        .storage-detail-info p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .folders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .folder-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .folder-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+        .folder-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .folder-name {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .folder-count {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        .files-table-container {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .files-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-row {
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        .file-row:hover {
+            background: rgba(59, 130, 246, 0.04);
+        }
+        .file-row:last-child {
+            border-bottom: none;
+        }
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        .file-icon.image { background: rgba(59, 130, 246, 0.15); color: var(--primary-color); }
+        .file-icon.document { background: rgba(16, 185, 129, 0.15); color: var(--success-color); }
+        .file-icon.video { background: rgba(245, 158, 11, 0.15); color: var(--accent-color); }
+        .file-icon.audio { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+        .file-icon.other { background: rgba(100, 116, 139, 0.15); color: var(--secondary-color); }
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .file-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .file-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .file-size {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-right: 16px;
+        }
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .file-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-dark);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        .file-action-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        .upload-area {
+            border: 3px dashed var(--border-color);
+            border-radius: var(--radius);
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 24px;
+            background: var(--bg-card);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .upload-area i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+        }
+        @media (max-width: 1024px) {
+            .storage-overview { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .content-area { padding: 20px 16px; }
+            .folders-grid { grid-template-columns: repeat(2, 1fr); }
+            .file-row { flex-wrap: wrap; }
+            .file-size { width: 100%; margin: 8px 0 0 56px; }
+        }
+
+        /* Hide protected content until Firebase confirms the admin is logged in */
+        body.auth-pending .sidebar,
+        body.auth-pending .main-content { visibility: hidden; }
+        #authGate {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-dark);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 2rem;
+        }
+        body:not(.auth-pending) #authGate { display: none; }
+    </style>
+</head>
+<body class="auth-pending">
+    <div id="authGate"><i class="fas fa-spinner fa-spin"></i></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">Nexora Admin</div></div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar" id="sidebarAvatar">A</div>
+            <div><div style="font-weight:700;font-size:0.95rem;" id="adminName">Admin</div><div style="font-size:0.8rem;color:var(--text-secondary);">Super Admin</div></div>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="admin-dashboard.html"><span class="sidebar-menu-icon">📊</span> Dashboard</a></li>
+            <li><a href="admin-projects.html"><span class="sidebar-menu-icon">📁</span> Projects</a></li>
+            <li><a href="admin-messages.html"><span class="sidebar-menu-icon">✉️</span> Messages</a></li>
+            <li><a href="admin-users.html"><span class="sidebar-menu-icon">👥</span> Users</a></li>
+            <li><a href="admin-portfolio.html"><span class="sidebar-menu-icon">🎨</span> Portfolio</a></li>
+            <li><a href="admin-blog.html"><span class="sidebar-menu-icon">📝</span> Blog Posts</a></li>
+            <li><a href="admin-gallery.html"><span class="sidebar-menu-icon">🖼️</span> Gallery</a></li>
+            <li><a href="admin-social-media.html"><span class="sidebar-menu-icon">🔗</span> Social Media</a></li>
+            <li><a href="admin-storages.html" class="active"><span class="sidebar-menu-icon">💾</span> Storage (128GB)</a></li>
+            <li><a href="admin-analytics.html"><span class="sidebar-menu-icon">📈</span> Analytics</a></li>
+            <li><a href="admin-logs.html"><span class="sidebar-menu-icon">📋</span> Activity Logs</a></li>
+            <li><a href="admin-settings.html"><span class="sidebar-menu-icon">⚙️</span> Settings</a></li>
+        </ul>
+        <div style="padding: 16px; border-top: 1px solid var(--border-color);">
+            <button onclick="logoutAdmin()" class="btn btn-danger" style="width: 100%;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+                <h1 style="font-size:1.25rem;">Storage (128GB)</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="sidebar-user-avatar" style="width:36px;height:36px;font-size:0.9rem;" id="headerAvatar">A</div>
+                    <span style="font-weight:600;" id="headerAdminName">Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="page-header">
+                <div>
+                    <h1>Cloud Storage</h1>
+                    <p style="color:var(--text-secondary);">128GB storage management</p>
+                </div>
+                <button class="btn btn-primary" onclick="document.getElementById('storageFileInput').click()">
+                    <i class="fas fa-cloud-upload-alt"></i> Upload Files
+                </button>
+            </div>
+
+            <div class="storage-overview">
+                <div class="storage-card">
+                    <div class="storage-header">
+                        <h3><i class="fas fa-hdd"></i> Storage Usage</h3>
+                        <span class="badge badge-primary">128GB Total</span>
+                    </div>
+                    <div class="storage-capacity" id="usedSpaceDisplay">0 GB</div>
+                    <div class="storage-label">Used of 128GB</div>
+                    <div class="storage-bar-container">
+                        <div class="storage-bar-labels">
+                            <span id="usedPercent">0%</span>
+                            <span id="freeSpace">128GB Free</span>
+                        </div>
+                        <div class="storage-bar">
+                            <div class="storage-bar-fill" id="storageBarFill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="storage-details">
+                        <div class="storage-detail-item">
+                            <div class="storage-detail-icon" style="background:rgba(59,130,246,0.15);color:var(--primary-color);"><i class="fas fa-image"></i></div>
+                            <div class="storage-detail-info">
+                                <h4>Images</h4>
+                                <p id="imageSize">0 MB</p>
+                            </div>
+                        </div>
+                        <div class="storage-detail-item">
+                            <div class="storage-detail-icon" style="background:rgba(16,185,129,0.15);color:var(--success-color);"><i class="fas fa-file-alt"></i></div>
+                            <div class="storage-detail-info">
+                                <h4>Documents</h4>
+                                <p id="docSize">0 MB</p>
+                            </div>
+                        </div>
+                        <div class="storage-detail-item">
+                            <div class="storage-detail-icon" style="background:rgba(245,158,11,0.15);color:var(--accent-color);"><i class="fas fa-video"></i></div>
+                            <div class="storage-detail-info">
+                                <h4>Videos</h4>
+                                <p id="videoSize">0 MB</p>
+                            </div>
+                        </div>
+                        <div class="storage-detail-item">
+                            <div class="storage-detail-icon" style="background:rgba(139,92,246,0.15);color:#8b5cf6;"><i class="fas fa-music"></i></div>
+                            <div class="storage-detail-info">
+                                <h4>Audio</h4>
+                                <p id="audioSize">0 MB</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="storage-card">
+                    <div class="storage-header">
+                        <h3><i class="fas fa-chart-pie"></i> Storage Breakdown</h3>
+                    </div>
+                    <div id="storageChart" style="height: 200px; display: flex; align-items: flex-end; justify-content: space-around; gap: 12px; padding: 20px 0;">
+                        <!-- Chart bars rendered dynamically -->
+                    </div>
+                    <div style="display: flex; justify-content: center; gap: 24px; margin-top: 16px; flex-wrap: wrap;">
+                        <span style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:12px;height:12px;border-radius:50%;background:var(--primary-color);"></span> Images</span>
+                        <span style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:12px;height:12px;border-radius:50%;background:var(--success-color);"></span> Docs</span>
+                        <span style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:12px;height:12px;border-radius:50%;background:var(--accent-color);"></span> Videos</span>
+                        <span style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:12px;height:12px;border-radius:50%;background:#8b5cf6;"></span> Audio</span>
+                        <span style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:12px;height:12px;border-radius:50%;background:var(--secondary-color);"></span> Other</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="folders-grid" id="foldersGrid">
+                <!-- Folders rendered dynamically -->
+            </div>
+
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('storageFileInput').click()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Upload Files</h3>
+                <p style="color:var(--text-secondary);">Drag & drop or click to upload</p>
+                <input type="file" id="storageFileInput" multiple style="display:none;" onchange="handleStorageUpload(this)">
+            </div>
+
+            <div class="files-table-container">
+                <div class="files-header">
+                    <h3><i class="fas fa-list"></i> All Files</h3>
+                    <div style="display:flex;gap:12px;">
+                        <select class="filter-select" id="fileFilter" onchange="filterFiles()">
+                            <option value="all">All Files</option>
+                            <option value="image">Images</option>
+                            <option value="document">Documents</option>
+                            <option value="video">Videos</option>
+                            <option value="audio">Audio</option>
+                        </select>
+                        <button class="btn btn-secondary btn-sm" onclick="deleteAllFiles()">
+                            <i class="fas fa-trash"></i> Clear All
+                        </button>
+                    </div>
+                </div>
+                <div id="filesList"></div>
+            </div>
+        </div>
+    </main>
+
+    <div class="toast-container"></div>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+  <script src="firebase-common.js"></script>
+    <script>
+        const TOTAL_SPACE = 128 * 1024 * 1024 * 1024; // 128GB in bytes
+        let allFiles = [];
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            var overlay = document.getElementById('mobileNavOverlay');
+            if (overlay) {
+                overlay.classList.toggle('active');
+            }
+        }
+
+        // Drag and drop
+        const uploadArea = document.getElementById('uploadArea');
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
+        });
+
+        function handleStorageUpload(input) {
+            if (input.files.length > 0) handleFiles(input.files);
+        }
+
+        function getFileType(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            if (['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext)) return 'image';
+            if (['pdf','doc','docx','txt','xls','xlsx','ppt','pptx'].includes(ext)) return 'document';
+            if (['mp4','avi','mov','wmv','flv','mkv'].includes(ext)) return 'video';
+            if (['mp3','wav','aac','flac','ogg','m4a'].includes(ext)) return 'audio';
+            return 'other';
+        }
+
+        function getFileIcon(type) {
+            const icons = {
+                image: 'fa-image',
+                document: 'fa-file-alt',
+                video: 'fa-video',
+                audio: 'fa-music',
+                other: 'fa-file'
+            };
+            return icons[type] || 'fa-file';
+        }
+
+        async function handleFiles(files) {
+            const storageData = await DB.getStorageUsage();
+            const currentUsed = storageData.usedSpace || 0;
+            let runningUsed = currentUsed;
+
+            for (const file of files) {
+                if (runningUsed + file.size > TOTAL_SPACE) {
+                    showToast('Not enough storage space!', 'error');
+                    return;
+                }
+
+                showToast(`Uploading: ${file.name}...`, 'info');
+                try {
+                    // Real upload to Firebase Storage — the database only ever
+                    // stores metadata + the real download URL, never the file
+                    // bytes themselves. Storing every file as base64 directly
+                    // in the Realtime Database (the old approach) would blow
+                    // past RTDB's per-node and total size limits almost
+                    // immediately, long before reaching anywhere near 128GB.
+                    const url = await DB.uploadFile(file, 'storage-files');
+                    const fileData = {
+                        name: file.name,
+                        type: getFileType(file.name),
+                        size: file.size,
+                        data: url,
+                        createdAt: new Date().toISOString()
+                    };
+                    await DB.addStorageFile(fileData);
+                    runningUsed += file.size;
+                    showToast(`Uploaded: ${file.name}`, 'success');
+                    loadStorage();
+                } catch (error) {
+                    console.error('Storage upload error:', error);
+                    showToast(`Failed: ${file.name}`, 'error');
+                }
+            }
+        }
+
+        async function loadStorage() {
+            try {
+                const storageData = await DB.getStorageUsage();
+                allFiles = storageData.files ? Object.entries(storageData.files).map(([id, f]) => ({id, ...f})) : [];
+                
+                // Calculate stats
+                const usedSpace = storageData.usedSpace || 0;
+                const freeSpace = TOTAL_SPACE - usedSpace;
+                const usedPercent = ((usedSpace / TOTAL_SPACE) * 100).toFixed(1);
+                
+                // Update display
+                document.getElementById('usedSpaceDisplay').textContent = formatBytes(usedSpace);
+                document.getElementById('usedPercent').textContent = usedPercent + '%';
+                document.getElementById('freeSpace').textContent = formatBytes(freeSpace) + ' Free';
+                document.getElementById('storageBarFill').style.width = usedPercent + '%';
+                
+                // Category sizes
+                const categories = { image: 0, document: 0, video: 0, audio: 0, other: 0 };
+                allFiles.forEach(f => {
+                    categories[f.type] = (categories[f.type] || 0) + (f.size || 0);
+                });
+                
+                document.getElementById('imageSize').textContent = formatBytes(categories.image);
+                document.getElementById('docSize').textContent = formatBytes(categories.document);
+                document.getElementById('videoSize').textContent = formatBytes(categories.video);
+                document.getElementById('audioSize').textContent = formatBytes(categories.audio);
+                
+                // Render folders
+                const folders = [
+                    { name: 'Images', icon: '🖼️', type: 'image', count: allFiles.filter(f => f.type === 'image').length },
+                    { name: 'Documents', icon: '📄', type: 'document', count: allFiles.filter(f => f.type === 'document').length },
+                    { name: 'Videos', icon: '🎬', type: 'video', count: allFiles.filter(f => f.type === 'video').length },
+                    { name: 'Audio', icon: '🎵', type: 'audio', count: allFiles.filter(f => f.type === 'audio').length },
+                    { name: 'Others', icon: '📦', type: 'other', count: allFiles.filter(f => f.type === 'other').length }
+                ];
+                
+                document.getElementById('foldersGrid').innerHTML = folders.map(f => `
+                    <div class="folder-card" onclick="filterFiles('${f.type}')">
+                        <span class="folder-icon">${f.icon}</span>
+                        <div class="folder-name">${f.name}</div>
+                        <div class="folder-count">${f.count} files</div>
+                    </div>
+                `).join('');
+                
+                // Render chart
+                const maxVal = Math.max(...Object.values(categories), 1);
+                const chartColors = { image: 'var(--primary-color)', document: 'var(--success-color)', video: 'var(--accent-color)', audio: '#8b5cf6', other: 'var(--secondary-color)' };
+                document.getElementById('storageChart').innerHTML = Object.entries(categories).map(([key, val]) => `
+                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;">
+                        <div style="width:40px;background:${chartColors[key]};border-radius:4px 4px 0 0;transition:height 1s ease;height:${(val / maxVal * 160) || 4}px;"></div>
+                        <span style="font-size:0.75rem;color:var(--text-secondary);text-transform:capitalize;">${key}</span>
+                    </div>
+                `).join('');
+                
+                filterFiles();
+            } catch (error) {
+                showToast('Error loading storage', 'error');
+            }
+        }
+
+        function filterFiles(type) {
+            if (type) {
+                document.getElementById('fileFilter').value = type;
+            }
+            const filter = document.getElementById('fileFilter').value;
+            const filtered = filter === 'all' ? allFiles : allFiles.filter(f => f.type === filter);
+            renderFiles(filtered);
+        }
+
+        function renderFiles(files) {
+            const container = document.getElementById('filesList');
+            if (files.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:40px;color:var(--text-secondary);">
+                        <i class="fas fa-folder-open" style="font-size:3rem;margin-bottom:16px;display:block;"></i>
+                        <p>No files found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = files.map(file => `
+                <div class="file-row">
+                    <div class="file-icon ${file.type}"><i class="fas ${getFileIcon(file.type)}"></i></div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-meta">${file.type} | ${formatDate(file.createdAt)}</div>
+                    </div>
+                    <div class="file-size">${formatBytes(file.size)}</div>
+                    <div class="file-actions">
+                        <button class="file-action-btn" onclick="downloadFile('${file.id}')" title="Download"><i class="fas fa-download"></i></button>
+                        <button class="file-action-btn" onclick="deleteFile('${file.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        async function downloadFile(id) {
+            const file = allFiles.find(f => f.id === id);
+            if (!file || !file.data) {
+                showToast('File not available for download', 'warning');
+                return;
+            }
+            try {
+                const response = await fetch(file.data);
+                if (!response.ok) throw new Error('Fetch failed: ' + response.status);
+                const blob = await response.blob();
+                const objectUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = objectUrl;
+                a.download = file.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+                showToast('Download started', 'success');
+            } catch (error) {
+                console.error('Download fetch failed, falling back to opening file:', error);
+                window.open(file.data, '_blank');
+                showToast('Opened the file in a new tab — use your browser\'s save option', 'info');
+            }
+        }
+
+        async function deleteFile(id) {
+            if (!confirm('Delete this file?')) return;
+            try {
+                await DB.deleteStorageFile(id);
+                showToast('File deleted', 'success');
+                loadStorage();
+            } catch (error) {
+                showToast('Error deleting file', 'error');
+            }
+        }
+
+        async function deleteAllFiles() {
+            if (!confirm('Delete ALL files? This cannot be undone!')) return;
+            try {
+                const storageData = await DB.getStorageUsage();
+                const files = storageData.files ? Object.entries(storageData.files).map(([id, f]) => ({id, ...f})) : [];
+                for (const file of files) {
+                    await DB.deleteStorageFile(file.id);
+                }
+                showToast('All files deleted', 'success');
+                loadStorage();
+            } catch (error) {
+                showToast('Error deleting files', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await checkAuth(); // redirects to admin-login.html if not signed in
+            if (!user) return;
+
+            const adminName = getAdminEmail().split('@')[0];
+            document.getElementById('adminName').textContent = adminName;
+            document.getElementById('headerAdminName').textContent = adminName;
+            document.getElementById('sidebarAvatar').textContent = adminName.charAt(0).toUpperCase();
+            document.getElementById('headerAvatar').textContent = adminName.charAt(0).toUpperCase();
+
+            loadStorage();
+            initMobileMenu();
+        });
+</script>
+
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleSidebar()"></div>
+</body>
+</html>

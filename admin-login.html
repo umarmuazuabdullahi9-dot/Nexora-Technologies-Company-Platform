@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#3b82f6">
+    <title>Login | Admin Panel</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-darkest), var(--bg-dark));
+            padding: 20px;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-logo i {
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .login-logo h1 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        .login-logo p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .login-form .form-group {
+            margin-bottom: 20px;
+        }
+        .login-form .form-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .login-form .form-input {
+            padding: 14px 16px;
+        }
+        .input-icon-wrapper {
+            position: relative;
+        }
+        .input-icon-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+        .input-icon-wrapper .form-input {
+            padding-left: 44px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            margin-top: 8px;
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        .login-footer a {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            background: var(--danger-light);
+            color: var(--danger-color);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+        .error-message.show {
+            display: flex;
+        }
+        .theme-toggle-login {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 28px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle theme-toggle-login" onclick="toggleTheme()" title="Toggle Theme">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <div class="login-container">
+        <div class="login-logo">
+            <i class="fas fa-shield-alt"></i>
+            <h1>Nexora Admin</h1>
+            <p>Sign in to your admin dashboard</p>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="errorText">Invalid email or password</span>
+        </div>
+
+        <form class="login-form" id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-envelope"></i> Email Address
+                </label>
+                <div class="input-icon-wrapper">
+                    <i class="fas fa-user"></i>
+                    <input type="email" class="form-input" id="email" placeholder="admin@nexoratechnologies.com" required autocomplete="email">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-lock"></i> Password
+                </label>
+                <div class="input-icon-wrapper">
+                    <i class="fas fa-key"></i>
+                    <input type="password" class="form-input" id="password" placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary login-btn" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+        </form>
+
+        <div class="login-footer">
+            <p style="margin-top: 8px;"><a href="index.html"><i class="fas fa-arrow-left"></i> Back to Portfolio</a></p>
+        </div>
+    </div>
+
+    <div class="toast-container"></div>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+  <script src="firebase-common.js"></script>
+    <script>
+        // Check if already logged in (real Firebase auth state, not localStorage)
+        getCurrentAdmin().then((user) => {
+            if (user) {
+                window.location.href = 'admin-dashboard.html';
+            }
+        });
+
+        async function handleLogin(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('errorMessage');
+
+            // Show loading
+            btn.innerHTML = '<div class="spinner spinner-sm"></div> Signing in...';
+            btn.disabled = true;
+            errorMsg.classList.remove('show');
+
+            try {
+                const result = await loginAdmin(email, password);
+                if (result.success) {
+                    showToast('Login successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'admin-dashboard.html';
+                    }, 1000);
+                }
+            } catch (error) {
+                document.getElementById('errorText').textContent = error.message || 'Invalid email or password';
+                errorMsg.classList.add('show');
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+                btn.disabled = false;
+            }
+        }
+
+        // Init theme
+        initTheme();
+    </script>
+</body>
+</html>

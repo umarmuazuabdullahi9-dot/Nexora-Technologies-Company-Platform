@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Messages | Admin Panel</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .content-area { padding: 32px; }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        /* Search & Filter Bar */
+        .messages-toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 250px;
+            max-width: 400px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .search-box .search-clear {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 4px;
+            display: none;
+        }
+        .search-box .search-clear:hover {
+            color: var(--danger-color);
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-card);
+            padding: 4px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+        }
+        .filter-tab {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: calc(var(--radius) - 2px);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-tab:hover {
+            color: var(--text-primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+        .filter-tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        .filter-tab .tab-count {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .filter-tab.active .tab-count {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .messages-container {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 0;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            min-height: 600px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        .messages-list {
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            max-height: 700px;
+            display: flex;
+            flex-direction: column;
+        }
+        .messages-list-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(37, 99, 235, 0.02));
+        }
+        .messages-list-header h3 {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+        .messages-list-header h3 i {
+            color: var(--primary-color);
+        }
+        .messages-list-stats {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .message-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .message-item:hover {
+            background: rgba(37, 99, 235, 0.04);
+        }
+        .message-item.active {
+            background: rgba(37, 99, 235, 0.08);
+            border-left: 3px solid var(--primary-color);
+        }
+        .message-item.unread {
+            background: rgba(37, 99, 235, 0.03);
+        }
+        .message-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: var(--primary-color);
+            border-radius: 50%;
+        }
+        .message-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .message-item-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .message-item-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .message-item-subject {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .message-item-preview {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            opacity: 0.8;
+        }
+        .message-item-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .message-item:hover .message-item-actions {
+            opacity: 1;
+        }
+        .message-item-action-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .message-item-action-btn:hover {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+        }
+        .message-item-action-btn.delete:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .message-detail {
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--bg-card);
+        }
+        .message-detail-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.03), rgba(37, 99, 235, 0.01));
+        }
+        .message-detail-from {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .message-detail-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .message-detail-info h4 {
+            font-size: 1.15rem;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .message-detail-info p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .message-detail-meta {
+            display: flex;
+            gap: 24px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            flex-wrap: wrap;
+        }
+        .message-detail-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .message-detail-meta span i {
+            color: var(--primary-color);
+            opacity: 0.7;
+        }
+        .message-detail-body {
+            flex: 1;
+            padding: 32px;
+            line-height: 1.8;
+            color: var(--text-primary);
+            font-size: 1rem;
+            overflow-y: auto;
+        }
+        .message-detail-body p {
+            margin-bottom: 16px;
+        }
+        .message-detail-actions {
+            display: flex;
+            gap: 12px;
+            padding: 20px 32px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-card);
+        }
+
+        /* Reply Form */
+        .reply-form {
+            padding: 20px 32px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-card);
+            display: none;
+        }
+        .reply-form.active {
+            display: block;
+        }
+        .reply-form textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-body);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            resize: vertical;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+        .reply-form textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .reply-form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .empty-detail {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+            padding: 40px;
+            text-align: center;
+        }
+        .empty-detail i {
+            font-size: 4rem;
+            margin-bottom: 24px;
+            color: var(--border-color);
+            opacity: 0.5;
+        }
+        .empty-detail h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        /* Selection Bar */
+        .selection-bar {
+            display: none;
+            padding: 12px 20px;
+            background: rgba(37, 99, 235, 0.08);
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            justify-content: space-between;
+        }
+        .selection-bar.active {
+            display: flex;
+        }
+        .selection-bar-info {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        .selection-bar-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Loading State */
+        .messages-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        .messages-loading i {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* No Results */
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            display: block;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .messages-container { grid-template-columns: 1fr; }
+            .messages-list { max-height: 350px; border-right: none; border-bottom: 1px solid var(--border-color); }
+            .message-detail { min-height: 400px; }
+        }
+        @media (max-width: 768px) {
+            .content-area { padding: 20px 16px; }
+            .message-detail-header, .message-detail-body, .message-detail-actions, .reply-form {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+            .messages-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-box {
+                max-width: none;
+            }
+            .filter-tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        /* Hide protected content until Firebase confirms the admin is logged in */
+        body.auth-pending .sidebar,
+        body.auth-pending .main-content { visibility: hidden; }
+        #authGate {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary, #0f172a);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary, #94a3b8);
+            font-size: 2rem;
+        }
+        body:not(.auth-pending) #authGate { display: none; }
+    </style>
+</head>
+<body class="auth-pending">
+    <div id="authGate"><i class="fas fa-spinner fa-spin"></i></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">Nexora Admin</div></div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar">A</div>
+            <div><div style="font-weight:700;font-size:0.95rem;" id="adminName">Admin</div><div style="font-size:0.8rem;color:var(--text-secondary);">Super Admin</div></div>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="admin-dashboard.html"><span class="sidebar-menu-icon">📊</span> Dashboard</a></li>
+            <li><a href="admin-projects.html"><span class="sidebar-menu-icon">📁</span> Projects</a></li>
+            <li><a href="admin-messages.html" class="active"><span class="sidebar-menu-icon">✉️</span> Messages</a></li>
+            <li><a href="admin-users.html"><span class="sidebar-menu-icon">👥</span> Users</a></li>
+            <li><a href="admin-portfolio.html"><span class="sidebar-menu-icon">🎨</span> Portfolio</a></li>
+            <li><a href="admin-blog.html"><span class="sidebar-menu-icon">📝</span> Blog Posts</a></li>
+            <li><a href="admin-gallery.html"><span class="sidebar-menu-icon">🖼️</span> Gallery</a></li>
+            <li><a href="admin-social-media.html"><span class="sidebar-menu-icon">🔗</span> Social Media</a></li>
+            <li><a href="admin-storages.html"><span class="sidebar-menu-icon">💾</span> Storage (128GB)</a></li>
+            <li><a href="admin-analytics.html"><span class="sidebar-menu-icon">📈</span> Analytics</a></li>
+            <li><a href="admin-logs.html"><span class="sidebar-menu-icon">📋</span> Activity Logs</a></li>
+            <li><a href="admin-settings.html"><span class="sidebar-menu-icon">⚙️</span> Settings</a></li>
+        </ul>
+        <div style="padding: 16px; border-top: 1px solid var(--border-color);">
+            <button onclick="logoutAdmin()" class="btn btn-danger" style="width: 100%;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+                <h1 style="font-size:1.25rem;">Messages</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="sidebar-user-avatar" style="width:36px;height:36px;font-size:0.9rem;">A</div>
+                    <span style="font-weight:600;" id="headerAdminName">Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="page-header">
+                <div>
+                    <h1>Messages</h1>
+                    <p style="color:var(--text-secondary);">Manage contact form submissions</p>
+                </div>
+                <div style="display:flex;gap:12px;">
+                    <button class="btn btn-secondary" onclick="markAllRead()">
+                        <i class="fas fa-check-double"></i> Mark All Read
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteAllMessages()">
+                        <i class="fas fa-trash"></i> Delete All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="messages-toolbar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search messages..." oninput="handleSearch()">
+                    <button class="search-clear" id="searchClear" onclick="clearSearch()"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="filter-tabs">
+                    <button class="filter-tab active" onclick="setFilter('all')" id="filterAll">
+                        <i class="fas fa-inbox"></i> All <span class="tab-count" id="countAll">0</span>
+                    </button>
+                    <button class="filter-tab" onclick="setFilter('unread')" id="filterUnread">
+                        <i class="fas fa-envelope"></i> Unread <span class="tab-count" id="countUnread">0</span>
+                    </button>
+                    <button class="filter-tab" onclick="setFilter('read')" id="filterRead">
+                        <i class="fas fa-envelope-open"></i> Read <span class="tab-count" id="countRead">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="messages-container">
+                <div class="messages-list">
+                    <div class="messages-list-header">
+                        <div>
+                            <h3><i class="fas fa-inbox"></i> Inbox</h3>
+                            <div class="messages-list-stats" id="listStats">Loading...</div>
+                        </div>
+                        <span class="badge badge-success" id="unreadCount">0</span>
+                    </div>
+                    <div id="messagesList">
+                        <div class="messages-loading">
+                            <i class="fas fa-spinner"></i>
+                            <p>Loading messages...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="message-detail" id="messageDetail">
+                    <div class="empty-detail">
+                        <i class="fas fa-envelope-open"></i>
+                        <h3>Select a message</h3>
+                        <p>Click on a message from the list to view its contents</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="toast-container"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="firebase-common.js"></script>
+    <script>
+        let allMessages = [];
+        let filteredMessages = [];
+        let selectedId = null;
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            var overlay = document.getElementById('mobileNavOverlay');
+            if (overlay) {
+                overlay.classList.toggle('active');
+            }
+        }
+
+        async function loadMessages() {
+            try {
+                allMessages = await DB.getMessages();
+                // Sort by date descending
+                allMessages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                applyFilters();
+                updateCounts();
+                updateUnreadCount();
+            } catch (error) {
+                showToast('Error loading messages', 'error');
+                document.getElementById('messagesList').innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Failed to load messages</p>
+                    </div>
+                `;
+            }
+        }
+
+        function applyFilters() {
+            filteredMessages = allMessages.filter(msg => {
+                // Filter by read/unread
+                if (currentFilter === 'unread' && msg.read) return false;
+                if (currentFilter === 'read' && !msg.read) return false;
+
+                // Filter by search
+                if (searchQuery) {
+                    const q = searchQuery.toLowerCase();
+                    return (
+                        (msg.name && msg.name.toLowerCase().includes(q)) ||
+                        (msg.email && msg.email.toLowerCase().includes(q)) ||
+                        (msg.subject && msg.subject.toLowerCase().includes(q)) ||
+                        (msg.message && msg.message.toLowerCase().includes(q))
+                    );
+                }
+                return true;
+            });
+            renderMessagesList();
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1)).classList.add('active');
+            applyFilters();
+        }
+
+        function handleSearch() {
+            const input = document.getElementById('searchInput');
+            searchQuery = input.value.trim();
+            document.getElementById('searchClear').style.display = searchQuery ? 'block' : 'none';
+            applyFilters();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            searchQuery = '';
+            document.getElementById('searchClear').style.display = 'none';
+            applyFilters();
+        }
+
+        function updateCounts() {
+            const total = allMessages.length;
+            const unread = allMessages.filter(m => !m.read).length;
+            const read = allMessages.filter(m => m.read).length;
+
+            document.getElementById('countAll').textContent = total;
+            document.getElementById('countUnread').textContent = unread;
+            document.getElementById('countRead').textContent = read;
+
+            const stats = filteredMessages.length === total 
+                ? `${total} message${total !== 1 ? 's' : ''}` 
+                : `Showing ${filteredMessages.length} of ${total}`;
+            document.getElementById('listStats').textContent = stats;
+        }
+
+        function renderMessagesList() {
+            const container = document.getElementById('messagesList');
+            updateCounts();
+
+            if (filteredMessages.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-inbox"></i>
+                        <p>${searchQuery ? 'No messages match your search' : 'No messages yet'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredMessages.map(msg => `
+                <div class="message-item ${msg.read ? '' : 'unread'} ${msg.id === selectedId ? 'active' : ''}" 
+                     onclick="selectMessage('${msg.id}')" data-id="${msg.id}">
+                    <div class="message-item-header">
+                        <span class="message-item-name">${escapeHtml(msg.name)} ${msg.read ? '' : '<span style="color:var(--primary-color);font-size:0.7rem;">●</span>'}</span>
+                        <span class="message-item-time">${formatRelativeTime(msg.createdAt)}</span>
+                    </div>
+                    <div class="message-item-subject">${escapeHtml(msg.subject)}</div>
+                    <div class="message-item-preview">${escapeHtml(truncateText(msg.message, 60))}</div>
+                    <div class="message-item-actions">
+                        <button class="message-item-action-btn" onclick="event.stopPropagation(); copyMessage('${msg.id}')" title="Copy">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="message-item-action-btn delete" onclick="event.stopPropagation(); deleteMessage('${msg.id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function selectMessage(id) {
+            selectedId = id;
+            const msg = allMessages.find(m => m.id === id);
+            if (!msg) return;
+
+            renderMessagesList();
+
+            const isUnread = !msg.read;
+
+            document.getElementById('messageDetail').innerHTML = `
+                <div class="message-detail-header">
+                    <div class="message-detail-from">
+                        <div class="message-detail-avatar">${msg.name.charAt(0).toUpperCase()}</div>
+                        <div class="message-detail-info">
+                            <h4>${escapeHtml(msg.name)}</h4>
+                            <p><i class="fas fa-envelope" style="margin-right:4px;"></i>${escapeHtml(msg.email)}</p>
+                        </div>
+                    </div>
+                    <div class="message-detail-meta">
+                        <span><i class="far fa-clock"></i> ${formatDate(msg.createdAt)}</span>
+                        <span><i class="fas fa-tag"></i> ${escapeHtml(msg.subject)}</span>
+                        ${isUnread ? '<span style="color:var(--primary-color);"><i class="fas fa-circle" style="font-size:0.5rem;"></i> Unread</span>' : '<span><i class="fas fa-check-double"></i> Read</span>'}
+                    </div>
+                </div>
+                <div class="message-detail-body">
+                    <p>${escapeHtml(msg.message).replace(/\n/g, '<br>')}</p>
+                </div>
+                <div class="message-detail-actions">
+                    <button class="btn btn-primary" onclick="toggleReplyForm()">
+                        <i class="fas fa-reply"></i> Reply
+                    </button>
+                    <a href="mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject)}" class="btn btn-secondary" target="_blank">
+                        <i class="fas fa-external-link-alt"></i> Open in Email
+                    </a>
+                    <button class="btn btn-secondary" onclick="copyMessage('${msg.id}')">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteMessage('${msg.id}')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+                <div class="reply-form" id="replyForm">
+                    <textarea id="replyText" placeholder="Type your reply here..."></textarea>
+                    <div class="reply-form-actions">
+                        <button class="btn btn-secondary" onclick="toggleReplyForm()">Cancel</button>
+                        <button class="btn btn-primary" onclick="sendReply('${msg.id}')">
+                            <i class="fas fa-paper-plane"></i> Send Reply
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            if (!msg.read) {
+                await DB.markMessageAsRead(id);
+                msg.read = true;
+                updateUnreadCount();
+                updateCounts();
+            }
+
+            // Scroll to top on mobile
+            if (window.innerWidth <= 1024) {
+                document.getElementById('messageDetail').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function toggleReplyForm() {
+            const form = document.getElementById('replyForm');
+            form.classList.toggle('active');
+            if (form.classList.contains('active')) {
+                setTimeout(() => document.getElementById('replyText').focus(), 100);
+            }
+        }
+
+        async function sendReply(msgId) {
+            const text = document.getElementById('replyText').value.trim();
+            if (!text) {
+                showToast('Please enter a reply message', 'error');
+                return;
+            }
+            const msg = allMessages.find(m => m.id === msgId);
+            if (!msg) return;
+
+            // Open email client with reply
+            const subject = encodeURIComponent('Re: ' + msg.subject);
+            const body = encodeURIComponent('\n\n--- Original Message ---\nFrom: ' + msg.name + ' <' + msg.email + '>\nDate: ' + formatDate(msg.createdAt) + '\nSubject: ' + msg.subject + '\n\n' + msg.message + '\n\n--- Your Reply ---\n' + text);
+            window.open(`mailto:${msg.email}?subject=${subject}&body=${body}`, '_blank');
+
+            showToast('Reply prepared in your email client', 'success');
+            toggleReplyForm();
+        }
+
+        function updateUnreadCount() {
+            const unread = allMessages.filter(m => !m.read).length;
+            document.getElementById('unreadCount').textContent = unread;
+        }
+
+        async function markAllRead() {
+            if (allMessages.filter(m => !m.read).length === 0) {
+                showToast('All messages are already read', 'info');
+                return;
+            }
+            for (const msg of allMessages.filter(m => !m.read)) {
+                await DB.markMessageAsRead(msg.id);
+                msg.read = true;
+            }
+            applyFilters();
+            updateUnreadCount();
+            showToast('All messages marked as read', 'success');
+        }
+
+        async function deleteMessage(id) {
+            if (!confirm('Delete this message? This action cannot be undone.')) return;
+            try {
+                await DB.deleteMessage(id);
+                allMessages = allMessages.filter(m => m.id !== id);
+                if (selectedId === id) {
+                    selectedId = null;
+                    document.getElementById('messageDetail').innerHTML = `
+                        <div class="empty-detail">
+                            <i class="fas fa-envelope-open"></i>
+                            <h3>Select a message</h3>
+                            <p>Click on a message from the list to view its contents</p>
+                        </div>
+                    `;
+                }
+                applyFilters();
+                updateUnreadCount();
+                showToast('Message deleted', 'success');
+            } catch (error) {
+                showToast('Error deleting message', 'error');
+            }
+        }
+
+        async function deleteAllMessages() {
+            if (allMessages.length === 0) {
+                showToast('No messages to delete', 'info');
+                return;
+            }
+            if (!confirm('Delete ALL messages? This cannot be undone!')) return;
+            try {
+                for (const msg of allMessages) {
+                    await DB.deleteMessage(msg.id);
+                }
+                allMessages = [];
+                selectedId = null;
+                applyFilters();
+                document.getElementById('messageDetail').innerHTML = `
+                    <div class="empty-detail">
+                        <i class="fas fa-envelope-open"></i>
+                        <h3>Select a message</h3>
+                        <p>Click on a message from the list to view its contents</p>
+                    </div>
+                `;
+                updateUnreadCount();
+                showToast('All messages deleted', 'success');
+            } catch (error) {
+                showToast('Error deleting messages', 'error');
+            }
+        }
+
+        function copyMessage(id) {
+            const msg = allMessages.find(m => m.id === id);
+            if (!msg) return;
+            const text = `From: ${msg.name} (${msg.email})\nSubject: ${msg.subject}\nDate: ${formatDate(msg.createdAt)}\n\n${msg.message}`;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Message copied to clipboard', 'success');
+            }).catch(() => {
+                showToast('Failed to copy message', 'error');
+            });
+        }
+
+        // Utility functions
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Unknown';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function formatRelativeTime(dateString) {
+            if (!dateString) return 'Unknown';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return diffMins + 'm ago';
+            if (diffHours < 24) return diffHours + 'h ago';
+            if (diffDays < 7) return diffDays + 'd ago';
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('replyForm')?.classList.contains('active')) {
+                    toggleReplyForm();
+                }
+            }
+            // Ctrl/Cmd + K to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await checkAuth(); // redirects to admin-login.html if not signed in
+            if (!user) return;
+
+            const adminName = getAdminEmail().split('@')[0];
+            document.getElementById('adminName').textContent = adminName;
+            document.getElementById('headerAdminName').textContent = adminName;
+
+            loadMessages();
+            initMobileMenu();
+        });
+    </script>
+
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleSidebar()"></div>
+</body>
+</html>

@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#3b82f6">
+    <title>Portfolio Editor | Admin Panel</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f172a; --bg-card: #1e293b; --bg-hover: rgba(37,99,235,0.08);
+            --border-color: #334155; --text-primary: #f1f5f9; --text-secondary: #94a3b8;
+            --text-muted: #64748b; --primary-color: #3b82f6; --primary-light: #60a5fa;
+            --success-color: #10b981; --warning-color: #f59e0b; --danger-color: #ef4444;
+            --info-color: #06b6d4; --accent-color: #8b5cf6;
+            --radius: 12px; --radius-lg: 16px; --radius-full: 9999px;
+            --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        [data-theme="light"] {
+            --bg-primary: #f8fafc; --bg-card: #ffffff; --bg-hover: rgba(37,99,235,0.05);
+            --border-color: #e2e8f0; --text-primary: #0f172a; --text-secondary: #64748b; --text-muted: #94a3b8;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--bg-primary); color:var(--text-primary); min-height:100vh; display:flex; line-height:1.6; }
+
+        .sidebar { width:280px; background:var(--bg-card); border-right:1px solid var(--border-color); height:100vh; position:fixed; left:0; top:0; overflow-y:auto; z-index:100; transition:var(--transition); }
+        .sidebar-header { padding:24px; border-bottom:1px solid var(--border-color); }
+        .sidebar-logo { font-size:1.4rem; font-weight:800; background:linear-gradient(135deg,var(--primary-color),var(--accent-color)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .sidebar-user { padding:20px 24px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border-color); }
+        .sidebar-user-avatar { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--primary-color),var(--accent-color)); display:flex; align-items:center; justify-content:center; font-weight:700; color:white; font-size:1rem; }
+        .sidebar-menu { list-style:none; padding:12px 0; }
+        .sidebar-menu li a { display:flex; align-items:center; gap:12px; padding:12px 24px; color:var(--text-secondary); text-decoration:none; transition:var(--transition); border-left:3px solid transparent; font-size:0.95rem; }
+        .sidebar-menu li a:hover { background:var(--bg-hover); color:var(--text-primary); border-left-color:var(--primary-color); }
+        .sidebar-menu li a.active { background:var(--bg-hover); color:var(--primary-color); border-left-color:var(--primary-color); font-weight:600; }
+        .sidebar-menu-icon { font-size:1.1rem; width:24px; text-align:center; }
+
+        .main-content { flex:1; margin-left:280px; min-height:100vh; display:flex; flex-direction:column; }
+        .top-header { background:var(--bg-card); border-bottom:1px solid var(--border-color); padding:16px 32px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50; backdrop-filter:blur(10px); }
+        .mobile-menu-btn { display:none; background:none; border:none; color:var(--text-primary); font-size:1.5rem; cursor:pointer; }
+        .theme-toggle { background:none; border:none; color:var(--text-secondary); font-size:1.2rem; cursor:pointer; padding:8px; border-radius:8px; transition:var(--transition); }
+        .theme-toggle:hover { background:var(--bg-hover); color:var(--primary-color); }
+        .content-area { padding:32px; flex:1; }
+
+        .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:32px; flex-wrap:wrap; gap:16px; }
+        .page-title h1 { font-size:1.75rem; font-weight:700; margin-bottom:6px; background:linear-gradient(135deg,var(--text-primary),var(--text-secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .page-title p { color:var(--text-secondary); font-size:0.95rem; }
+        .header-actions { display:flex; gap:12px; flex-wrap:wrap; }
+
+        .btn { padding:12px 20px; border:none; border-radius:10px; font-size:0.9rem; font-weight:600; cursor:pointer; transition:var(--transition); display:inline-flex; align-items:center; gap:8px; }
+        .btn-primary { background:linear-gradient(135deg,var(--primary-color),#2563eb); color:white; }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 15px rgba(59,130,246,0.4); }
+        .btn-primary:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+        .btn-secondary { background:var(--bg-primary); color:var(--text-secondary); border:1px solid var(--border-color); }
+        .btn-secondary:hover { background:var(--bg-hover); color:var(--text-primary); }
+        .btn-danger { background:rgba(239,68,68,0.1); color:var(--danger-color); border:1px solid rgba(239,68,68,0.2); }
+        .btn-danger:hover { background:rgba(239,68,68,0.2); }
+        .btn-success { background:rgba(16,185,129,0.1); color:var(--success-color); border:1px solid rgba(16,185,129,0.2); }
+        .btn-success:hover { background:rgba(16,185,129,0.2); }
+        .btn-sm { padding:8px 14px; font-size:0.8rem; }
+        .btn-icon { width:36px; height:36px; padding:0; justify-content:center; border-radius:8px; }
+
+        .form-group { margin-bottom:20px; }
+        .form-label { display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:8px; }
+        .form-label .required { color:var(--danger-color); margin-left:2px; }
+        .form-input { width:100%; padding:12px 16px; background:var(--bg-primary); border:1px solid var(--border-color); border-radius:10px; color:var(--text-primary); font-size:0.95rem; transition:var(--transition); font-family:inherit; }
+        .form-input:focus { outline:none; border-color:var(--primary-color); box-shadow:0 0 0 3px rgba(59,130,246,0.15); }
+        .form-input::placeholder { color:var(--text-muted); }
+        .form-input.error { border-color:var(--danger-color); }
+        .form-input.error:focus { box-shadow:0 0 0 3px rgba(239,68,68,0.15); }
+        .form-error { color:var(--danger-color); font-size:0.8rem; margin-top:6px; display:none; }
+        .form-error.show { display:block; }
+        textarea.form-input { resize:vertical; min-height:100px; }
+        select.form-input { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 16px center; padding-right:40px; }
+
+        .tabs-nav { display:flex; gap:4px; margin-bottom:24px; border-bottom:1px solid var(--border-color); overflow-x:auto; padding-bottom:1px; }
+        .tab-btn { padding:12px 20px; background:none; border:none; color:var(--text-secondary); font-size:0.9rem; font-weight:600; cursor:pointer; transition:var(--transition); border-bottom:2px solid transparent; white-space:nowrap; display:flex; align-items:center; gap:8px; }
+        .tab-btn:hover { color:var(--text-primary); }
+        .tab-btn.active { color:var(--primary-color); border-bottom-color:var(--primary-color); }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; animation:fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        .portfolio-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(400px,1fr)); gap:24px; }
+        .portfolio-card { background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid var(--border-color); padding:28px; transition:var(--transition); }
+        .portfolio-card:hover { box-shadow:var(--shadow-lg); transform:translateY(-2px); }
+        .portfolio-card h3 { font-size:1.1rem; margin-bottom:24px; display:flex; align-items:center; gap:10px; color:var(--text-primary); }
+        .portfolio-card h3 i { color:var(--primary-color); }
+        .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        .card-header h3 { margin:0; }
+
+        .photo-upload { display:flex; flex-direction:column; align-items:center; gap:16px; padding:24px; border:2px dashed var(--border-color); border-radius:var(--radius-lg); transition:var(--transition); cursor:pointer; position:relative; overflow:hidden; }
+        .photo-upload:hover, .photo-upload.dragover { border-color:var(--primary-color); background:var(--bg-hover); }
+        .photo-upload.dragover { background:rgba(59,130,246,0.05); }
+        .photo-preview { width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid var(--primary-color); display:none; }
+        .photo-preview.show { display:block; }
+        .photo-placeholder { width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,var(--primary-color),var(--accent-color)); display:flex; align-items:center; justify-content:center; font-size:3rem; color:white; }
+        .photo-placeholder.hidden { display:none; }
+        .photo-upload-text { text-align:center; color:var(--text-secondary); font-size:0.85rem; }
+        .photo-upload-text strong { color:var(--primary-color); display:block; margin-bottom:4px; }
+        .photo-upload input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+        .photo-actions { display:flex; gap:8px; }
+
+        .skill-tag-input { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; min-height:40px; }
+        .skill-tag-item { display:flex; align-items:center; gap:6px; padding:6px 14px; background:linear-gradient(135deg,var(--primary-color),var(--accent-color)); color:white; border-radius:var(--radius-full); font-size:0.85rem; font-weight:600; animation:tagPop 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+        @keyframes tagPop { from { opacity:0; transform:scale(0.5); } to { opacity:1; transform:scale(1); } }
+        .skill-tag-item button { background:none; border:none; color:white; cursor:pointer; font-size:0.8rem; padding:0; width:18px; height:18px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:var(--transition); }
+        .skill-tag-item button:hover { background:rgba(255,255,255,0.2); }
+        .skill-input-row { display:flex; gap:8px; }
+
+        .social-row { display:flex; align-items:center; gap:12px; padding:14px 0; border-bottom:1px solid var(--border-color); transition:var(--transition); }
+        .social-row:last-child { border-bottom:none; }
+        .social-row:hover { padding-left:8px; }
+        .social-icon { width:44px; height:44px; border-radius:12px; background:var(--bg-primary); display:flex; align-items:center; justify-content:center; color:var(--primary-color); font-size:1.2rem; flex-shrink:0; transition:var(--transition); }
+        .social-row:hover .social-icon { background:linear-gradient(135deg,var(--primary-color),var(--accent-color)); color:white; }
+        .social-row input { flex:1; }
+        .social-status { width:10px; height:10px; border-radius:50%; background:var(--border-color); flex-shrink:0; transition:var(--transition); }
+        .social-status.valid { background:var(--success-color); box-shadow:0 0 8px rgba(16,185,129,0.4); }
+        .social-status.invalid { background:var(--danger-color); }
+
+        .timeline-item { display:flex; gap:16px; padding:16px; background:var(--bg-primary); border-radius:var(--radius); margin-bottom:12px; border:1px solid var(--border-color); transition:var(--transition); animation:slideIn 0.3s ease; }
+        .timeline-item:hover { border-color:var(--primary-color); }
+        @keyframes slideIn { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+        .timeline-icon { width:44px; height:44px; border-radius:12px; background:rgba(59,130,246,0.1); display:flex; align-items:center; justify-content:center; color:var(--primary-color); font-size:1.1rem; flex-shrink:0; }
+        .timeline-content { flex:1; }
+        .timeline-content h4 { font-size:0.95rem; font-weight:600; margin-bottom:4px; }
+        .timeline-content p { color:var(--text-secondary); font-size:0.85rem; margin-bottom:4px; }
+        .timeline-meta { display:flex; gap:12px; font-size:0.8rem; color:var(--text-muted); }
+        .timeline-actions { display:flex; gap:6px; }
+        .timeline-btn { width:32px; height:32px; border-radius:8px; border:none; background:var(--bg-card); color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:var(--transition); }
+        .timeline-btn:hover { background:var(--danger-color); color:white; }
+        .timeline-btn.edit:hover { background:var(--primary-color); color:white; }
+        .add-timeline-btn { width:100%; padding:14px; border:2px dashed var(--border-color); border-radius:var(--radius); background:none; color:var(--text-secondary); font-size:0.9rem; font-weight:600; cursor:pointer; transition:var(--transition); display:flex; align-items:center; justify-content:center; gap:8px; }
+        .add-timeline-btn:hover { border-color:var(--primary-color); color:var(--primary-color); background:var(--bg-hover); }
+
+        .service-item { display:flex; align-items:center; gap:16px; padding:16px; background:var(--bg-primary); border-radius:var(--radius); margin-bottom:12px; border:1px solid var(--border-color); transition:var(--transition); }
+        .service-item:hover { border-color:var(--primary-color); transform:translateX(4px); }
+        .service-icon { width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,var(--primary-color),var(--accent-color)); display:flex; align-items:center; justify-content:center; color:white; font-size:1.3rem; flex-shrink:0; }
+        .service-info { flex:1; }
+        .service-info h4 { font-size:0.95rem; font-weight:600; margin-bottom:2px; }
+        .service-info p { color:var(--text-secondary); font-size:0.85rem; }
+
+        .testimonial-item { padding:20px; background:var(--bg-primary); border-radius:var(--radius); margin-bottom:12px; border:1px solid var(--border-color); transition:var(--transition); }
+        .testimonial-item:hover { border-color:var(--primary-color); }
+        .testimonial-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+        .testimonial-avatar { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,var(--primary-color),var(--accent-color)); display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:1rem; flex-shrink:0; }
+        .testimonial-author { flex:1; }
+        .testimonial-author h4 { font-size:0.95rem; font-weight:600; }
+        .testimonial-author p { color:var(--text-secondary); font-size:0.8rem; }
+        .testimonial-rating { color:var(--warning-color); font-size:0.85rem; }
+        .testimonial-text { color:var(--text-secondary); font-size:0.9rem; line-height:1.6; font-style:italic; }
+
+        .theme-colors { display:flex; gap:12px; flex-wrap:wrap; }
+        .theme-color-option { width:40px; height:40px; border-radius:10px; cursor:pointer; border:3px solid transparent; transition:var(--transition); position:relative; }
+        .theme-color-option:hover { transform:scale(1.1); }
+        .theme-color-option.active { border-color:var(--text-primary); box-shadow:0 0 0 3px var(--bg-card),0 0 0 5px var(--primary-color); }
+        .theme-color-option.active::after { content:'\f00c'; font-family:'Font Awesome 6 Free'; font-weight:900; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:white; font-size:0.9rem; text-shadow:0 1px 3px rgba(0,0,0,0.3); }
+
+        .preview-section { background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid var(--border-color); padding:32px; margin-top:24px; position:sticky; top:80px; }
+        .preview-section h3 { font-size:1.1rem; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+        .preview-section h3 i { color:var(--primary-color); }
+        .preview-box { background:var(--bg-primary); border-radius:var(--radius-lg); padding:32px; border:1px solid var(--border-color); text-align:center; }
+        .preview-photo { width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--primary-color); margin:0 auto 16px; }
+        .preview-name { font-size:1.4rem; font-weight:800; background:linear-gradient(135deg,#fff,var(--primary-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:4px; }
+        .preview-title { color:var(--text-secondary); font-size:0.95rem; margin-bottom:12px; }
+        .preview-location { color:var(--text-muted); font-size:0.85rem; margin-bottom:16px; display:flex; align-items:center; justify-content:center; gap:6px; }
+        .preview-bio { color:var(--text-secondary); line-height:1.7; margin-bottom:20px; font-size:0.9rem; }
+        .preview-skills { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:20px; }
+        .preview-skill { padding:4px 12px; background:rgba(59,130,246,0.1); border-radius:var(--radius-full); font-size:0.8rem; color:var(--primary-light); font-weight:600; border:1px solid rgba(59,130,246,0.2); }
+        .preview-social { display:flex; gap:12px; justify-content:center; }
+        .preview-social a { width:40px; height:40px; border-radius:50%; background:var(--bg-card); border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; color:var(--text-secondary); transition:var(--transition); text-decoration:none; }
+        .preview-social a:hover { background:linear-gradient(135deg,var(--primary-color),var(--accent-color)); color:white; border-color:transparent; transform:translateY(-2px); }
+        .preview-contact { display:flex; gap:16px; justify-content:center; margin-top:16px; font-size:0.85rem; color:var(--text-secondary); }
+        .preview-contact span { display:flex; align-items:center; gap:6px; }
+
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:20px; }
+        .modal-overlay.active { display:flex; animation:fadeIn 0.2s ease; }
+        .modal { background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid var(--border-color); width:100%; max-width:500px; max-height:90vh; overflow-y:auto; animation:modalSlide 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+        @keyframes modalSlide { from { opacity:0; transform:scale(0.9) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .modal-header { padding:20px 24px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; }
+        .modal-header h3 { font-size:1.1rem; }
+        .modal-close { background:none; border:none; color:var(--text-secondary); font-size:1.2rem; cursor:pointer; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; transition:var(--transition); }
+        .modal-close:hover { background:var(--bg-hover); color:var(--danger-color); }
+        .modal-body { padding:24px; }
+        .modal-footer { padding:16px 24px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:12px; }
+
+        .toast-container { position:fixed; top:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:12px; }
+        .toast { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); padding:16px 20px; display:flex; align-items:center; gap:12px; box-shadow:0 10px 40px rgba(0,0,0,0.3); animation:toastSlide 0.4s cubic-bezier(0.175,0.885,0.32,1.275); min-width:300px; }
+        @keyframes toastSlide { from { opacity:0; transform:translateX(100px) scale(0.9); } to { opacity:1; transform:translateX(0) scale(1); } }
+        .toast.success { border-left:4px solid var(--success-color); }
+        .toast.error { border-left:4px solid var(--danger-color); }
+        .toast.warning { border-left:4px solid var(--warning-color); }
+        .toast.info { border-left:4px solid var(--primary-color); }
+        .toast i { font-size:1.1rem; }
+        .toast.success i { color:var(--success-color); }
+        .toast.error i { color:var(--danger-color); }
+        .toast.warning i { color:var(--warning-color); }
+        .toast.info i { color:var(--primary-color); }
+
+        .autosave-indicator { display:flex; align-items:center; gap:8px; font-size:0.85rem; color:var(--text-muted); padding:8px 16px; background:var(--bg-primary); border-radius:var(--radius-full); border:1px solid var(--border-color); }
+        .autosave-indicator.saving { color:var(--warning-color); }
+        .autosave-indicator.saved { color:var(--success-color); }
+        .autosave-indicator i { font-size:0.8rem; }
+        .autosave-indicator.saving i { animation:spin 1s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        .mobile-nav-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:99; backdrop-filter:blur(4px); }
+        .mobile-nav-overlay.active { display:block; }
+
+        @media (max-width:1024px) {
+            .sidebar { transform:translateX(-100%); }
+            .sidebar.active { transform:translateX(0); }
+            .main-content { margin-left:0; }
+            .mobile-menu-btn { display:block; }
+            .portfolio-grid { grid-template-columns:1fr; }
+            .preview-section { position:relative; top:0; }
+        }
+        @media (max-width:768px) {
+            .content-area { padding:20px 16px; }
+            .portfolio-card { padding:20px; }
+            .tabs-nav { gap:0; }
+            .tab-btn { padding:10px 14px; font-size:0.85rem; }
+            .timeline-item { flex-direction:column; gap:12px; }
+            .timeline-actions { justify-content:flex-end; }
+        }
+
+        ::-webkit-scrollbar { width:8px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:var(--border-color); border-radius:4px; }
+        ::-webkit-scrollbar-thumb:hover { background:var(--text-secondary); }
+
+        /* Hide protected content until Firebase confirms the admin is logged in */
+        body.auth-pending .sidebar,
+        body.auth-pending .main-content { visibility: hidden; }
+        #authGate {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 2rem;
+        }
+        body:not(.auth-pending) #authGate { display: none; }
+    </style>
+</head>
+<body class="auth-pending">
+    <div id="authGate"><i class="fas fa-spinner fa-spin"></i></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">Nexora Admin</div></div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar" id="sidebarAvatar">A</div>
+            <div>
+                <div style="font-weight:700;font-size:0.95rem;" id="adminName">Admin</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);">Super Admin</div>
+            </div>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="admin-dashboard.html"><span class="sidebar-menu-icon">📊</span> Dashboard</a></li>
+            <li><a href="admin-projects.html"><span class="sidebar-menu-icon">📁</span> Projects</a></li>
+            <li><a href="admin-messages.html"><span class="sidebar-menu-icon">✉️</span> Messages</a></li>
+            <li><a href="admin-users.html"><span class="sidebar-menu-icon">👥</span> Users</a></li>
+            <li><a href="admin-portfolio.html" class="active"><span class="sidebar-menu-icon">🎨</span> Portfolio</a></li>
+            <li><a href="admin-blog.html"><span class="sidebar-menu-icon">📝</span> Blog Posts</a></li>
+            <li><a href="admin-gallery.html"><span class="sidebar-menu-icon">🖼️</span> Gallery</a></li>
+            <li><a href="admin-social-media.html"><span class="sidebar-menu-icon">🔗</span> Social Media</a></li>
+            <li><a href="admin-storages.html"><span class="sidebar-menu-icon">💾</span> Storage (128GB)</a></li>
+            <li><a href="admin-analytics.html"><span class="sidebar-menu-icon">📈</span> Analytics</a></li>
+            <li><a href="admin-logs.html"><span class="sidebar-menu-icon">📋</span> Activity Logs</a></li>
+            <li><a href="admin-settings.html"><span class="sidebar-menu-icon">⚙️</span> Settings</a></li>
+        </ul>
+        <div style="padding: 16px; border-top: 1px solid var(--border-color);">
+            <button onclick="logoutAdmin()" class="btn btn-danger" style="width: 100%;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+                <h1 style="font-size:1.25rem;">Portfolio Editor</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <div class="autosave-indicator" id="autosaveIndicator">
+                    <i class="fas fa-check-circle"></i>
+                    <span>All changes saved</span>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme"><i class="fas fa-moon" id="themeIcon"></i></button>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="sidebar-user-avatar" style="width:36px;height:36px;font-size:0.9rem;" id="headerAvatar">A</div>
+                    <span style="font-weight:600;" id="headerAdminName">Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Portfolio Editor</h1>
+                    <p>Manage your public portfolio content and appearance</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="resetPortfolio()"><i class="fas fa-undo"></i> Reset</button>
+                    <button class="btn btn-success" onclick="previewPortfolio()"><i class="fas fa-eye"></i> Preview</button>
+                    <button class="btn btn-primary" onclick="savePortfolio()" id="saveBtn">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+
+            <div class="tabs-nav">
+                <button class="tab-btn active" onclick="switchTab('personal')" data-tab="personal"><i class="fas fa-user"></i> Personal</button>
+                <button class="tab-btn" onclick="switchTab('experience')" data-tab="experience"><i class="fas fa-briefcase"></i> Experience</button>
+                <button class="tab-btn" onclick="switchTab('education')" data-tab="education"><i class="fas fa-graduation-cap"></i> Education</button>
+                <button class="tab-btn" onclick="switchTab('services')" data-tab="services"><i class="fas fa-cogs"></i> Services</button>
+                <button class="tab-btn" onclick="switchTab('process')" data-tab="process"><i class="fas fa-route"></i> How We Work</button>
+                <button class="tab-btn" onclick="switchTab('testimonials')" data-tab="testimonials"><i class="fas fa-quote-left"></i> Testimonials</button>
+                <button class="tab-btn" onclick="switchTab('settings')" data-tab="settings"><i class="fas fa-palette"></i> Appearance</button>
+            </div>
+
+            <div class="tab-content active" id="tab-personal">
+                <div class="portfolio-grid">
+                    <div class="portfolio-card">
+                        <div class="card-header"><h3><i class="fas fa-camera"></i> Profile Photo</h3></div>
+                        <div class="photo-upload" id="photoUpload" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                            <img src="" alt="Profile" class="photo-preview" id="photoPreview">
+                            <div class="photo-placeholder" id="photoPlaceholder"><i class="fas fa-user"></i></div>
+                            <div class="photo-upload-text"><strong>Click to upload or drag and drop</strong><span>PNG, JPG up to 5MB</span></div>
+                            <input type="file" id="photoInput" accept="image/*" onchange="handlePhotoUpload(event)">
+                        </div>
+                        <div class="photo-actions" style="margin-top:12px;justify-content:center;display:flex;gap:8px;">
+                            <button class="btn btn-secondary btn-sm" onclick="removePhoto()"><i class="fas fa-trash"></i> Remove</button>
+                            <button class="btn btn-primary btn-sm" onclick="document.getElementById('photoInput').click()"><i class="fas fa-upload"></i> Change</button>
+                        </div>
+                    </div>
+
+                    <div class="portfolio-card">
+                        <h3><i class="fas fa-id-card"></i> Personal Information</h3>
+                        <div class="form-group">
+                            <label class="form-label">Full Name <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="portfolioName" placeholder="Your full name" oninput="validateField(this); updatePreview();">
+                            <div class="form-error" id="error-portfolioName">Name is required</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Professional Title <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="portfolioTitle" placeholder="e.g. Full Stack Developer" oninput="validateField(this); updatePreview();">
+                            <div class="form-error" id="error-portfolioTitle">Title is required</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bio / Description</label>
+                            <textarea class="form-input" id="portfolioBio" rows="4" placeholder="Write a short bio about yourself..." oninput="updatePreview()"></textarea>
+                            <div style="text-align:right;font-size:0.8rem;color:var(--text-muted);margin-top:4px;"><span id="bioCount">0</span>/500 characters</div>
+                        </div>
+                    </div>
+
+                    <div class="portfolio-card">
+                        <h3><i class="fas fa-address-card"></i> Contact Information</h3>
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-input" id="portfolioEmail" placeholder="your@email.com" oninput="validateField(this); updatePreview();">
+                            <div class="form-error" id="error-portfolioEmail">Please enter a valid email</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-input" id="portfolioPhone" placeholder="+234 XXX XXX XXXX" oninput="updatePreview();">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Location</label>
+                            <input type="text" class="form-input" id="portfolioLocation" placeholder="City, Country" oninput="updatePreview();">
+                        </div>
+                    </div>
+
+                    <div class="portfolio-card">
+                        <h3><i class="fas fa-share-alt"></i> Social Links</h3>
+                        <div class="social-row">
+                            <div class="social-icon"><i class="fab fa-github"></i></div>
+                            <input type="url" class="form-input" id="socialGithub" placeholder="https://github.com/username" oninput="validateSocial(this,'github'); updatePreview();">
+                            <div class="social-status" id="status-github"></div>
+                        </div>
+                        <div class="social-row">
+                            <div class="social-icon"><i class="fab fa-linkedin-in"></i></div>
+                            <input type="url" class="form-input" id="socialLinkedin" placeholder="https://linkedin.com/in/username" oninput="validateSocial(this,'linkedin'); updatePreview();">
+                            <div class="social-status" id="status-linkedin"></div>
+                        </div>
+                        <div class="social-row">
+                            <div class="social-icon"><i class="fab fa-twitter"></i></div>
+                            <input type="url" class="form-input" id="socialTwitter" placeholder="https://twitter.com/username" oninput="validateSocial(this,'twitter'); updatePreview();">
+                            <div class="social-status" id="status-twitter"></div>
+                        </div>
+                        <div class="social-row">
+                            <div class="social-icon"><i class="fas fa-globe"></i></div>
+                            <input type="url" class="form-input" id="socialPortfolio" placeholder="https://yourwebsite.com" oninput="validateSocial(this,'portfolio'); updatePreview();">
+                            <div class="social-status" id="status-portfolio"></div>
+                        </div>
+                        <div class="social-row">
+                            <div class="social-icon"><i class="fab fa-dribbble"></i></div>
+                            <input type="url" class="form-input" id="socialDribbble" placeholder="https://dribbble.com/username" oninput="validateSocial(this,'dribbble'); updatePreview();">
+                            <div class="social-status" id="status-dribbble"></div>
+                        </div>
+                    </div>
+
+                    <div class="portfolio-card">
+                        <h3><i class="fas fa-tools"></i> Skills and Expertise</h3>
+                        <div class="skill-tag-input" id="skillsContainer"><p style="color:var(--text-muted);font-size:0.9rem;">No skills added yet</p></div>
+                        <div class="skill-input-row">
+                            <input type="text" class="form-input" id="newSkill" placeholder="Add a skill (e.g. React, Python)..." onkeypress="if(event.key==='Enter'){event.preventDefault();addSkill();}">
+                            <button type="button" class="btn btn-primary" onclick="addSkill()" style="white-space:nowrap;"><i class="fas fa-plus"></i> Add</button>
+                        </div>
+                        <p style="color:var(--text-muted);font-size:0.8rem;margin-top:8px;"><i class="fas fa-info-circle"></i> Press Enter or click Add to add a skill</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-experience">
+                <div class="portfolio-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-briefcase"></i> Work Experience</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('experience')"><i class="fas fa-plus"></i> Add Experience</button>
+                    </div>
+                    <div id="experienceList"></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-education">
+                <div class="portfolio-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-graduation-cap"></i> Education</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('education')"><i class="fas fa-plus"></i> Add Education</button>
+                    </div>
+                    <div id="educationList"></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-services">
+                <div class="portfolio-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-cogs"></i> Services and Offerings</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('service')"><i class="fas fa-plus"></i> Add Service</button>
+                    </div>
+                    <div id="servicesList"></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-process">
+                <div class="portfolio-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-route"></i> How We Work</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('process')"><i class="fas fa-plus"></i> Add Step</button>
+                    </div>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:16px;">
+                        Steps appear in the order shown below on the public site. Use "Move Up/Down" to reorder.
+                    </p>
+                    <div id="processList"></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-testimonials">
+                <div class="portfolio-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-quote-left"></i> Client Testimonials</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('testimonial')"><i class="fas fa-plus"></i> Add Testimonial</button>
+                    </div>
+                    <div id="testimonialsList"></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-settings">
+                <div class="portfolio-grid">
+                    <div class="portfolio-card">
+                        <h3><i class="fas fa-palette"></i> Color Theme</h3>
+                        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:20px;">Choose a primary color for your portfolio</p>
+                        <div class="theme-colors" id="themeColors">
+                            <div class="theme-color-option active" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);" data-color="blue" onclick="selectTheme('blue')"></div>
+                            <div class="theme-color-option" style="background:linear-gradient(135deg,#10b981,#06b6d4);" data-color="green" onclick="selectTheme('green')"></div>
+                            <div class="theme-color-option" style="background:linear-gradient(135deg,#f59e0b,#ef4444);" data-color="orange" onclick="selectTheme('orange')"></div>
+                            <div class="theme-color-option" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);" data-color="pink" onclick="selectTheme('pink')"></div>
+                            <div class="theme-color-option" style="background:linear-gradient(135deg,#6366f1,#a855f7);" data-color="indigo" onclick="selectTheme('indigo')"></div>
+                            <div class="theme-color-option" style="background:linear-gradient(135deg,#14b8a6,#3b82f6);" data-color="teal" onclick="selectTheme('teal')"></div>
+                        </div>
+                    </div>
+                    <div class="portfolio-card">
+                        <h3><i class="fas fa-cog"></i> SEO Settings</h3>
+                        <div class="form-group">
+                            <label class="form-label">Meta Title</label>
+                            <input type="text" class="form-input" id="seoTitle" placeholder="Your Name - Professional Title" maxlength="60">
+                            <div style="text-align:right;font-size:0.8rem;color:var(--text-muted);margin-top:4px;"><span id="seoTitleCount">0</span>/60</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Meta Description</label>
+                            <textarea class="form-input" id="seoDescription" rows="3" placeholder="Brief description for search engines..." maxlength="160"></textarea>
+                            <div style="text-align:right;font-size:0.8rem;color:var(--text-muted);margin-top:4px;"><span id="seoDescCount">0</span>/160</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Keywords</label>
+                            <input type="text" class="form-input" id="seoKeywords" placeholder="web developer, designer, freelancer (comma separated)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-section">
+                <h3><i class="fas fa-eye"></i> Live Preview</h3>
+                <div class="preview-box" id="previewBox">
+                    <img src="" alt="Profile" class="preview-photo" id="previewPhoto" style="display:none;">
+                    <div class="preview-photo" id="previewPhotoPlaceholder" style="background:linear-gradient(135deg,var(--primary-color),var(--accent-color));display:flex;align-items:center;justify-content:center;color:white;font-size:2.5rem;font-weight:700;"><span id="previewInitial">A</span></div>
+                    <div class="preview-name" id="previewName">Your Name</div>
+                    <div class="preview-title" id="previewTitle">Your Professional Title</div>
+                    <div class="preview-location" id="previewLocation" style="display:none;"><i class="fas fa-map-marker-alt"></i> <span></span></div>
+                    <div class="preview-bio" id="previewBio">Your bio will appear here...</div>
+                    <div class="preview-skills" id="previewSkills"></div>
+                    <div class="preview-social" id="previewSocial"></div>
+                    <div class="preview-contact" id="previewContact" style="display:none;">
+                        <span id="previewEmail"><i class="fas fa-envelope"></i> </span>
+                        <span id="previewPhone"><i class="fas fa-phone"></i> </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header"><h3 id="modalTitle">Add Item</h3><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveModalItem()" id="modalSaveBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleSidebar()"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="firebase-common.js"></script>
+    <script>
+        // ===== STATE =====
+        let currentSkills = [];
+        let portfolioData = null;
+        let experiences = [];
+        let education = [];
+        let services = [];
+        let process = [];
+        let testimonials = [];
+        let currentTheme = 'blue';
+        let modalType = '';
+        let editingIndex = -1;
+        let hasChanges = false;
+        let selectedPhotoFile = null;
+        let photoRemoved = false;
+
+        // ===== DEFAULT DATA =====
+        const defaultPortfolio = {
+            name: 'Nexora Technologies',
+            title: 'Full Stack Development & Digital Solutions',
+            bio: 'Nexora Technologies builds scalable web applications, mobile apps, and digital solutions for businesses, government clients, and partners across Africa and beyond.',
+            email: 'contact@example.com',
+            phone: '+234 800 000 0000',
+            location: 'Kano, Nigeria',
+            skills: ['JavaScript', 'React', 'Node.js', 'Python', 'Firebase', 'UI/UX Design', 'TypeScript', 'MongoDB'],
+            social: {
+                github: 'https://github.com/username',
+                linkedin: 'https://linkedin.com/in/username',
+                twitter: 'https://twitter.com/username',
+                portfolio: 'https://yourwebsite.com',
+                dribbble: ''
+            },
+            theme: 'blue',
+            seo: {
+                title: 'Nexora Technologies - Full Stack Development & Digital Solutions',
+                description: 'Nexora Technologies specializes in React, Node.js, and modern web technologies for businesses and organizations.',
+                keywords: 'nexora technologies, web development, full stack, react, node.js, software company'
+            }
+        };
+
+        const defaultExperiences = [
+            { id: '1', company: 'Tech Solutions Ltd', role: 'Senior Full Stack Developer', description: 'Leading development of enterprise web applications using React and Node.js. Managing a team of 5 developers.', startDate: '2022-01', endDate: 'Present', current: true },
+            { id: '2', company: 'Digital Agency', role: 'Web Developer', description: 'Developed responsive websites and web applications for various clients across different industries.', startDate: '2020-06', endDate: '2021-12', current: false }
+        ];
+
+        const defaultEducation = [
+            { id: '1', school: 'University of Technology', degree: 'B.Sc. Computer Science', description: 'Graduated with honors. Specialized in software engineering and web development.', startDate: '2016-09', endDate: '2020-06' },
+            { id: '2', school: 'Online Academy', degree: 'Full Stack Web Development', description: 'Intensive bootcamp covering React, Node.js, MongoDB, and cloud deployment.', startDate: '2020-01', endDate: '2020-05' }
+        ];
+
+        const defaultServices = [
+            { id: '1', icon: 'fa-code', title: 'Web Development', description: 'Custom websites and web applications built with modern technologies.' },
+            { id: '2', icon: 'fa-mobile-alt', title: 'Mobile Apps', description: 'Cross-platform mobile applications using React Native and Flutter.' },
+            { id: '3', icon: 'fa-paint-brush', title: 'UI/UX Design', description: 'Beautiful and intuitive user interfaces that enhance user experience.' }
+        ];
+
+        const defaultProcess = [
+            { id: '1', icon: 'fa-search', title: 'Discovery', description: 'We start by understanding your goals, users, and constraints before writing a single line of code.' },
+            { id: '2', icon: 'fa-pencil-ruler', title: 'Design', description: 'Wireframes and visual design, refined with your feedback until the direction is right.' },
+            { id: '3', icon: 'fa-laptop-code', title: 'Development', description: 'Building the real thing, with regular check-ins so there are no surprises at the end.' },
+            { id: '4', icon: 'fa-vial', title: 'Testing & QA', description: 'Cross-browser, cross-device testing, and fixing issues before your users ever see them.' },
+            { id: '5', icon: 'fa-rocket', title: 'Launch', description: 'Deployment, monitoring, and making sure everything holds up under real traffic.' },
+            { id: '6', icon: 'fa-headset', title: 'Support', description: 'Ongoing maintenance and support after launch — we don\'t disappear once it ships.' }
+        ];
+
+        const defaultTestimonials = [
+            { id: '1', name: 'John Smith', role: 'CEO, TechStart', text: 'Abdullahi delivered an exceptional website that exceeded our expectations. Highly recommended!', rating: 5 },
+            { id: '2', name: 'Sarah Johnson', role: 'Product Manager', text: 'Professional, timely, and incredibly skilled. The best developer I have worked with.', rating: 5 }
+        ];
+
+        const themeColors = {
+            blue: { primary: '#3b82f6', accent: '#8b5cf6' },
+            green: { primary: '#10b981', accent: '#06b6d4' },
+            orange: { primary: '#f59e0b', accent: '#ef4444' },
+            pink: { primary: '#ec4899', accent: '#8b5cf6' },
+            indigo: { primary: '#6366f1', accent: '#a855f7' },
+            teal: { primary: '#14b8a6', accent: '#3b82f6' }
+        };
+
+        // ===== INIT =====
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await checkAuth(); // redirects to admin-login.html if not signed in
+            if (!user) return;
+
+            initAdminInfo();
+            initTheme();
+            await loadPortfolio();
+            setupAutoSave();
+            setupCharCounters();
+        });
+
+        function initAdminInfo() {
+            const email = (typeof getAdminEmail === 'function') ? getAdminEmail() : 'admin@aum.com';
+            const name = email.split('@')[0];
+            const initial = name.charAt(0).toUpperCase();
+            document.getElementById('adminName').textContent = name;
+            document.getElementById('headerAdminName').textContent = name;
+            document.getElementById('sidebarAvatar').textContent = initial;
+            document.getElementById('headerAvatar').textContent = initial;
+            document.getElementById('previewInitial').textContent = initial;
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateThemeIcon(next);
+        }
+
+        function updateThemeIcon(theme) {
+            document.getElementById('themeIcon').className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('mobileNavOverlay').classList.toggle('active');
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // ===== LOAD PORTFOLIO =====
+        async function loadPortfolio() {
+            try {
+                if (typeof DB !== 'undefined' && DB.getPortfolio) {
+                    portfolioData = await DB.getPortfolio();
+                }
+                if (!portfolioData || Object.keys(portfolioData).length === 0) {
+                    portfolioData = JSON.parse(JSON.stringify(defaultPortfolio));
+                    experiences = JSON.parse(JSON.stringify(defaultExperiences));
+                    education = JSON.parse(JSON.stringify(defaultEducation));
+                    services = JSON.parse(JSON.stringify(defaultServices));
+                    testimonials = JSON.parse(JSON.stringify(defaultTestimonials));
+                } else {
+                    experiences = portfolioData.experiences || JSON.parse(JSON.stringify(defaultExperiences));
+                    education = portfolioData.education || JSON.parse(JSON.stringify(defaultEducation));
+                    services = portfolioData.services || JSON.parse(JSON.stringify(defaultServices));
+                    process = portfolioData.process || JSON.parse(JSON.stringify(defaultProcess));
+                    testimonials = portfolioData.testimonials || JSON.parse(JSON.stringify(defaultTestimonials));
+                }
+                fillForm();
+                renderAll();
+                updatePreview();
+                selectTheme(portfolioData.theme || 'blue');
+            } catch (error) {
+                console.error('Error loading portfolio:', error);
+                portfolioData = JSON.parse(JSON.stringify(defaultPortfolio));
+                experiences = JSON.parse(JSON.stringify(defaultExperiences));
+                education = JSON.parse(JSON.stringify(defaultEducation));
+                services = JSON.parse(JSON.stringify(defaultServices));
+                testimonials = JSON.parse(JSON.stringify(defaultTestimonials));
+                fillForm();
+                renderAll();
+                updatePreview();
+                showToast('Using default data', 'info');
+            }
+        }
+
+        function fillForm() {
+            const data = portfolioData;
+            document.getElementById('portfolioName').value = data.name || '';
+            document.getElementById('portfolioTitle').value = data.title || '';
+            document.getElementById('portfolioBio').value = data.bio || '';
+            document.getElementById('portfolioEmail').value = data.email || '';
+            document.getElementById('portfolioPhone').value = data.phone || '';
+            document.getElementById('portfolioLocation').value = data.location || '';
+
+            const social = data.social || {};
+            document.getElementById('socialGithub').value = social.github || '';
+            document.getElementById('socialLinkedin').value = social.linkedin || '';
+            document.getElementById('socialTwitter').value = social.twitter || '';
+            document.getElementById('socialPortfolio').value = social.portfolio || '';
+            document.getElementById('socialDribbble').value = social.dribbble || '';
+
+            currentSkills = data.skills ? [...data.skills] : [];
+
+            const seo = data.seo || {};
+            document.getElementById('seoTitle').value = seo.title || '';
+            document.getElementById('seoDescription').value = seo.description || '';
+            document.getElementById('seoKeywords').value = seo.keywords || '';
+
+            ['github', 'linkedin', 'twitter', 'portfolio', 'dribbble'].forEach(platform => {
+                const input = document.getElementById('social' + platform.charAt(0).toUpperCase() + platform.slice(1));
+                if (input && input.value) validateSocial(input, platform);
+            });
+        }
+
+        function renderAll() {
+            renderSkills();
+            renderExperiences();
+            renderEducation();
+            renderServices();
+            renderProcess();
+            renderTestimonials();
+        }
+
+        // ===== SKILLS =====
+        function renderSkills() {
+            const container = document.getElementById('skillsContainer');
+            if (currentSkills.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted);font-size:0.9rem;">No skills added yet</p>';
+                return;
+            }
+            let html = '';
+            for (let i = 0; i < currentSkills.length; i++) {
+                html += '<div class="skill-tag-item">' + escapeHtml(currentSkills[i]) + '<button onclick="removeSkill(' + i + ')" title="Remove skill"><i class="fas fa-times"></i></button></div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function addSkill() {
+            const input = document.getElementById('newSkill');
+            const skill = input.value.trim();
+            if (!skill) return;
+            if (currentSkills.indexOf(skill) !== -1) {
+                showToast('Skill already exists', 'warning');
+                return;
+            }
+            currentSkills.push(skill);
+            input.value = '';
+            renderSkills();
+            updatePreview();
+            markChanged();
+        }
+
+        function removeSkill(index) {
+            currentSkills.splice(index, 1);
+            renderSkills();
+            updatePreview();
+            markChanged();
+        }
+
+        // ===== EXPERIENCE =====
+        function renderExperiences() {
+            const container = document.getElementById('experienceList');
+            if (experiences.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fas fa-briefcase" style="font-size:2rem;margin-bottom:12px;display:block;"></i><p>No work experience added yet</p></div>';
+                return;
+            }
+            let html = '';
+            for (let i = 0; i < experiences.length; i++) {
+                const exp = experiences[i];
+                html += '<div class="timeline-item">';
+                html += '<div class="timeline-icon"><i class="fas fa-building"></i></div>';
+                html += '<div class="timeline-content">';
+                html += '<h4>' + escapeHtml(exp.role) + '</h4>';
+                html += '<p>' + escapeHtml(exp.company) + '</p>';
+                html += '<p style="font-size:0.85rem;">' + escapeHtml(exp.description) + '</p>';
+                html += '<div class="timeline-meta">';
+                html += '<span><i class="far fa-calendar"></i> ' + escapeHtml(exp.startDate) + ' - ' + escapeHtml(exp.endDate) + '</span>';
+                if (exp.current) html += '<span style="color:var(--success-color);"><i class="fas fa-circle" style="font-size:6px;vertical-align:middle;margin-right:4px;"></i> Current</span>';
+                html += '</div></div>';
+                html += '<div class="timeline-actions">';
+                html += '<button class="timeline-btn edit" onclick="editItem(\'experience\',' + i + ')" title="Edit"><i class="fas fa-edit"></i></button>';
+                html += '<button class="timeline-btn" onclick="deleteItem(\'experience\',' + i + ')" title="Delete"><i class="fas fa-trash"></i></button>';
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+        }
+
+        // ===== EDUCATION =====
+        function renderEducation() {
+            const container = document.getElementById('educationList');
+            if (education.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fas fa-graduation-cap" style="font-size:2rem;margin-bottom:12px;display:block;"></i><p>No education added yet</p></div>';
+                return;
+            }
+            let html = '';
+            for (let i = 0; i < education.length; i++) {
+                const edu = education[i];
+                html += '<div class="timeline-item">';
+                html += '<div class="timeline-icon"><i class="fas fa-university"></i></div>';
+                html += '<div class="timeline-content">';
+                html += '<h4>' + escapeHtml(edu.degree) + '</h4>';
+                html += '<p>' + escapeHtml(edu.school) + '</p>';
+                html += '<p style="font-size:0.85rem;">' + escapeHtml(edu.description) + '</p>';
+                html += '<div class="timeline-meta">';
+                html += '<span><i class="far fa-calendar"></i> ' + escapeHtml(edu.startDate) + ' - ' + escapeHtml(edu.endDate) + '</span>';
+                html += '</div></div>';
+                html += '<div class="timeline-actions">';
+                html += '<button class="timeline-btn edit" onclick="editItem(\'education\',' + i + ')" title="Edit"><i class="fas fa-edit"></i></button>';
+                html += '<button class="timeline-btn" onclick="deleteItem(\'education\',' + i + ')" title="Delete"><i class="fas fa-trash"></i></button>';
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+        }
+
+        // ===== SERVICES =====
+        function renderServices() {
+            const container = document.getElementById('servicesList');
+            if (services.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fas fa-cogs" style="font-size:2rem;margin-bottom:12px;display:block;"></i><p>No services added yet</p></div>';
+                return;
+            }
+            let html = '';
+            for (let i = 0; i < services.length; i++) {
+                const svc = services[i];
+                html += '<div class="service-item">';
+                html += '<div class="service-icon"><i class="fas ' + escapeHtml(svc.icon) + '"></i></div>';
+                html += '<div class="service-info">';
+                html += '<h4>' + escapeHtml(svc.title) + '</h4>';
+                html += '<p>' + escapeHtml(svc.description) + '</p>';
+                html += '</div>';
+                html += '<div class="timeline-actions">';
+                html += '<button class="timeline-btn edit" onclick="editItem(\'service\',' + i + ')" title="Edit"><i class="fas fa-edit"></i></button>';
+                html += '<button class="timeline-btn" onclick="deleteItem(\'service\',' + i + ')" title="Delete"><i class="fas fa-trash"></i></button>';
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+        }
+
+        // ===== PROCESS (How We Work) =====
+        function renderProcess() {
+            const container = document.getElementById('processList');
+            if (process.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fas fa-route" style="font-size:2rem;margin-bottom:12px;display:block;"></i><p>No process steps added yet</p></div>';
+                return;
+            }
+            let html = '';
+            for (let i = 0; i < process.length; i++) {
+                const step = process[i];
+                html += '<div class="service-item">';
+                html += '<div class="service-icon" style="font-size:0.9rem;font-weight:700;">' + (i + 1) + '</div>';
+                html += '<div class="service-info">';
+                html += '<h4><i class="fas ' + escapeHtml(step.icon) + '" style="margin-right:8px;color:var(--primary-color);"></i>' + escapeHtml(step.title) + '</h4>';
+                html += '<p>' + escapeHtml(step.description) + '</p>';
+                html += '</div>';
+                html += '<div class="timeline-actions">';
+                html += '<button class="timeline-btn" onclick="moveProcessStep(' + i + ',-1)" title="Move Up" ' + (i === 0 ? 'disabled' : '') + '><i class="fas fa-arrow-up"></i></button>';
+                html += '<button class="timeline-btn" onclick="moveProcessStep(' + i + ',1)" title="Move Down" ' + (i === process.length - 1 ? 'disabled' : '') + '><i class="fas fa-arrow-down"></i></button>';
+                html += '<button class="timeline-btn edit" onclick="editItem(\'process\',' + i + ')" title="Edit"><i class="fas fa-edit"></i></button>';
+                html += '<button class="timeline-btn" onclick="deleteItem(\'process\',' + i + ')" title="Delete"><i class="fas fa-trash"></i></button>';
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function moveProcessStep(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= process.length) return;
+            [process[index], process[newIndex]] = [process[newIndex], process[index]];
+            renderProcess();
+            markChanged();
+        }
+
+        // ===== TESTIMONIALS =====
+        function renderTestimonials() {
+            const container = document.getElementById('testimonialsList');
+            if (testimonials.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fas fa-quote-left" style="font-size:2rem;margin-bottom:12px;display:block;"></i><p>No testimonials added yet</p></div>';
+                return;
+            }
+            let html = '';
+            for (let i = 0; i < testimonials.length; i++) {
+                const t = testimonials[i];
+                let stars = '';
+                for (let s = 0; s < 5; s++) {
+                    stars += '<i class="fas fa-star' + (s < t.rating ? '' : ' far') + '"></i>';
+                }
+                const initial = t.name.charAt(0).toUpperCase();
+                html += '<div class="testimonial-item">';
+                html += '<div class="testimonial-header">';
+                html += '<div class="testimonial-avatar">' + initial + '</div>';
+                html += '<div class="testimonial-author">';
+                html += '<h4>' + escapeHtml(t.name) + '</h4>';
+                html += '<p>' + escapeHtml(t.role) + '</p>';
+                html += '</div>';
+                html += '<div class="testimonial-rating">' + stars + '</div>';
+                html += '<div class="timeline-actions">';
+                html += '<button class="timeline-btn edit" onclick="editItem(\'testimonial\',' + i + ')" title="Edit"><i class="fas fa-edit"></i></button>';
+                html += '<button class="timeline-btn" onclick="deleteItem(\'testimonial\',' + i + ')" title="Delete"><i class="fas fa-trash"></i></button>';
+                html += '</div></div>';
+                html += '<div class="testimonial-text">"' + escapeHtml(t.text) + '"</div>';
+                html += '</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        // ===== PHOTO UPLOAD =====
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('File too large. Max 5MB allowed.', 'error');
+                return;
+            }
+            selectedPhotoFile = file;
+            photoRemoved = false;
+
+            // Instant local preview only — the real upload to Firebase Storage
+            // happens on Save, so we never stuff a base64 blob into the database.
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('photoPreview').src = e.target.result;
+                document.getElementById('photoPreview').classList.add('show');
+                document.getElementById('photoPlaceholder').classList.add('hidden');
+                document.getElementById('previewPhoto').src = e.target.result;
+                document.getElementById('previewPhoto').style.display = 'block';
+                document.getElementById('previewPhotoPlaceholder').style.display = 'none';
+                markChanged();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('photoUpload').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            document.getElementById('photoUpload').classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('photoUpload').classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const event = { target: { files: files } };
+                handlePhotoUpload(event);
+            }
+        }
+
+        function removePhoto() {
+            selectedPhotoFile = null;
+            photoRemoved = true;
+            document.getElementById('photoPreview').classList.remove('show');
+            document.getElementById('photoPlaceholder').classList.remove('hidden');
+            document.getElementById('photoInput').value = '';
+            document.getElementById('previewPhoto').style.display = 'none';
+            document.getElementById('previewPhotoPlaceholder').style.display = 'flex';
+            markChanged();
+        }
+
+        // ===== VALIDATION =====
+        function validateField(input) {
+            const id = input.id;
+            const errorEl = document.getElementById('error-' + id);
+            if (!errorEl) return true;
+
+            let isValid = true;
+            if (id === 'portfolioName' || id === 'portfolioTitle') {
+                isValid = input.value.trim().length > 0;
+            } else if (id === 'portfolioEmail') {
+                isValid = input.value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value);
+            }
+
+            if (isValid) {
+                input.classList.remove('error');
+                errorEl.classList.remove('show');
+            } else {
+                input.classList.add('error');
+                errorEl.classList.add('show');
+            }
+            return isValid;
+        }
+
+        function validateSocial(input, platform) {
+            const statusEl = document.getElementById('status-' + platform);
+            if (!statusEl) return;
+            const value = input.value.trim();
+            if (!value) {
+                statusEl.className = 'social-status';
+                return;
+            }
+            const isValid = value.startsWith('http://') || value.startsWith('https://');
+            statusEl.className = 'social-status ' + (isValid ? 'valid' : 'invalid');
+        }
+
+        // ===== PREVIEW =====
+        function updatePreview() {
+            const name = document.getElementById('portfolioName').value || 'Your Name';
+            const title = document.getElementById('portfolioTitle').value || 'Your Professional Title';
+            const bio = document.getElementById('portfolioBio').value || 'Your bio will appear here...';
+            const location = document.getElementById('portfolioLocation').value;
+            const email = document.getElementById('portfolioEmail').value;
+            const phone = document.getElementById('portfolioPhone').value;
+
+            document.getElementById('previewName').textContent = name;
+            document.getElementById('previewTitle').textContent = title;
+            document.getElementById('previewBio').textContent = bio;
+
+            const locEl = document.getElementById('previewLocation');
+            if (location) {
+                locEl.style.display = 'flex';
+                locEl.querySelector('span').textContent = location;
+            } else {
+                locEl.style.display = 'none';
+            }
+
+            const contactEl = document.getElementById('previewContact');
+            const emailSpan = document.getElementById('previewEmail');
+            const phoneSpan = document.getElementById('previewPhone');
+            if (email || phone) {
+                contactEl.style.display = 'flex';
+                emailSpan.style.display = email ? 'flex' : 'none';
+                phoneSpan.style.display = phone ? 'flex' : 'none';
+                emailSpan.innerHTML = '<i class="fas fa-envelope"></i> ' + escapeHtml(email);
+                phoneSpan.innerHTML = '<i class="fas fa-phone"></i> ' + escapeHtml(phone);
+            } else {
+                contactEl.style.display = 'none';
+            }
+
+            const skillsContainer = document.getElementById('previewSkills');
+            if (currentSkills.length === 0) {
+                skillsContainer.innerHTML = '';
+            } else {
+                let html = '';
+                for (let i = 0; i < currentSkills.length; i++) {
+                    html += '<span class="preview-skill">' + escapeHtml(currentSkills[i]) + '</span>';
+                }
+                skillsContainer.innerHTML = html;
+            }
+
+            const socialContainer = document.getElementById('previewSocial');
+            let socials = [];
+            if (document.getElementById('socialGithub').value) socials.push(['github', 'fab fa-github']);
+            if (document.getElementById('socialLinkedin').value) socials.push(['linkedin', 'fab fa-linkedin-in']);
+            if (document.getElementById('socialTwitter').value) socials.push(['twitter', 'fab fa-twitter']);
+            if (document.getElementById('socialPortfolio').value) socials.push(['portfolio', 'fas fa-globe']);
+            if (document.getElementById('socialDribbble').value) socials.push(['dribbble', 'fab fa-dribbble']);
+
+            let socialHtml = '';
+            for (let i = 0; i < socials.length; i++) {
+                socialHtml += '<a href="#" title="' + socials[i][0] + '" onclick="return false;"><i class="' + socials[i][1] + '"></i></a>';
+            }
+            socialContainer.innerHTML = socialHtml;
+        }
+
+        // ===== THEME =====
+        function selectTheme(color) {
+            currentTheme = color;
+            document.querySelectorAll('.theme-color-option').forEach(el => el.classList.remove('active'));
+            document.querySelector('[data-color="' + color + '"]').classList.add('active');
+
+            const colors = themeColors[color];
+            document.documentElement.style.setProperty('--primary-color', colors.primary);
+            document.documentElement.style.setProperty('--accent-color', colors.accent);
+            markChanged();
+        }
+
+        // ===== MODAL =====
+        function openModal(type, index) {
+            modalType = type;
+            editingIndex = index !== undefined ? index : -1;
+            const overlay = document.getElementById('modalOverlay');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+
+            const isEdit = editingIndex >= 0;
+
+            if (type === 'experience') {
+                title.textContent = isEdit ? 'Edit Experience' : 'Add Work Experience';
+                const exp = isEdit ? experiences[editingIndex] : {};
+                body.innerHTML = '<div class="form-group"><label class="form-label">Company Name <span class="required">*</span></label><input type="text" class="form-input" id="modalCompany" value="' + (exp.company || '') + '" placeholder="Company name"></div>' +
+                    '<div class="form-group"><label class="form-label">Role / Position <span class="required">*</span></label><input type="text" class="form-input" id="modalRole" value="' + (exp.role || '') + '" placeholder="Your role"></div>' +
+                    '<div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="modalExpDesc" rows="3" placeholder="Describe your responsibilities...">' + (exp.description || '') + '</textarea></div>' +
+                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+                    '<div class="form-group"><label class="form-label">Start Date</label><input type="month" class="form-input" id="modalStartDate" value="' + (exp.startDate || '') + '"></div>' +
+                    '<div class="form-group"><label class="form-label">End Date</label><input type="month" class="form-input" id="modalEndDate" value="' + (exp.endDate || '') + '"></div></div>' +
+                    '<div class="form-group" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="modalCurrent" ' + (exp.current ? 'checked' : '') + '><label for="modalCurrent" style="font-size:0.9rem;color:var(--text-secondary);">I currently work here</label></div>';
+            } else if (type === 'education') {
+                title.textContent = isEdit ? 'Edit Education' : 'Add Education';
+                const edu = isEdit ? education[editingIndex] : {};
+                body.innerHTML = '<div class="form-group"><label class="form-label">School / Institution <span class="required">*</span></label><input type="text" class="form-input" id="modalSchool" value="' + (edu.school || '') + '" placeholder="School name"></div>' +
+                    '<div class="form-group"><label class="form-label">Degree / Certificate <span class="required">*</span></label><input type="text" class="form-input" id="modalDegree" value="' + (edu.degree || '') + '" placeholder="e.g. B.Sc. Computer Science"></div>' +
+                    '<div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="modalEduDesc" rows="3" placeholder="Describe your studies...">' + (edu.description || '') + '</textarea></div>' +
+                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+                    '<div class="form-group"><label class="form-label">Start Date</label><input type="month" class="form-input" id="modalEduStart" value="' + (edu.startDate || '') + '"></div>' +
+                    '<div class="form-group"><label class="form-label">End Date</label><input type="month" class="form-input" id="modalEduEnd" value="' + (edu.endDate || '') + '"></div></div>';
+            } else if (type === 'service') {
+                title.textContent = isEdit ? 'Edit Service' : 'Add Service';
+                const svc = isEdit ? services[editingIndex] : {};
+                body.innerHTML = '<div class="form-group"><label class="form-label">Service Title <span class="required">*</span></label><input type="text" class="form-input" id="modalSvcTitle" value="' + (svc.title || '') + '" placeholder="e.g. Web Development"></div>' +
+                    '<div class="form-group"><label class="form-label">Icon Class (Font Awesome)</label><input type="text" class="form-input" id="modalSvcIcon" value="' + (svc.icon || 'fa-code') + '" placeholder="e.g. fa-code"></div>' +
+                    '<div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="modalSvcDesc" rows="3" placeholder="Describe the service...">' + (svc.description || '') + '</textarea></div>';
+            } else if (type === 'process') {
+                title.textContent = isEdit ? 'Edit Step' : 'Add Process Step';
+                const step = isEdit ? process[editingIndex] : {};
+                body.innerHTML = '<div class="form-group"><label class="form-label">Step Title <span class="required">*</span></label><input type="text" class="form-input" id="modalProcTitle" value="' + (step.title || '') + '" placeholder="e.g. Discovery"></div>' +
+                    '<div class="form-group"><label class="form-label">Icon Class (Font Awesome)</label><input type="text" class="form-input" id="modalProcIcon" value="' + (step.icon || 'fa-check') + '" placeholder="e.g. fa-search"></div>' +
+                    '<div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="modalProcDesc" rows="3" placeholder="What happens at this stage...">' + (step.description || '') + '</textarea></div>';
+            } else if (type === 'testimonial') {
+                title.textContent = isEdit ? 'Edit Testimonial' : 'Add Testimonial';
+                const t = isEdit ? testimonials[editingIndex] : {};
+                body.innerHTML = '<div class="form-group"><label class="form-label">Client Name <span class="required">*</span></label><input type="text" class="form-input" id="modalTestName" value="' + (t.name || '') + '" placeholder="Client name"></div>' +
+                    '<div class="form-group"><label class="form-label">Client Role / Company</label><input type="text" class="form-input" id="modalTestRole" value="' + (t.role || '') + '" placeholder="e.g. CEO, TechStart"></div>' +
+                    '<div class="form-group"><label class="form-label">Testimonial <span class="required">*</span></label><textarea class="form-input" id="modalTestText" rows="4" placeholder="What did they say about you...">' + (t.text || '') + '</textarea></div>' +
+                    '<div class="form-group"><label class="form-label">Rating</label><select class="form-input" id="modalTestRating">' +
+                    '<option value="5" ' + (t.rating === 5 ? 'selected' : '') + '>5 Stars - Excellent</option>' +
+                    '<option value="4" ' + (t.rating === 4 ? 'selected' : '') + '>4 Stars - Very Good</option>' +
+                    '<option value="3" ' + (t.rating === 3 ? 'selected' : '') + '>3 Stars - Good</option>' +
+                    '<option value="2" ' + (t.rating === 2 ? 'selected' : '') + '>2 Stars - Fair</option>' +
+                    '<option value="1" ' + (t.rating === 1 ? 'selected' : '') + '>1 Star - Poor</option></select></div>';
+            }
+
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(event) {
+            if (event && event.target !== document.getElementById('modalOverlay')) return;
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+            modalType = '';
+            editingIndex = -1;
+        }
+
+        function saveModalItem() {
+            if (modalType === 'experience') {
+                const company = document.getElementById('modalCompany').value.trim();
+                const role = document.getElementById('modalRole').value.trim();
+                if (!company || !role) {
+                    showToast('Please fill in required fields', 'error');
+                    return;
+                }
+                const item = {
+                    id: editingIndex >= 0 ? experiences[editingIndex].id : Date.now().toString(),
+                    company: company,
+                    role: role,
+                    description: document.getElementById('modalExpDesc').value.trim(),
+                    startDate: document.getElementById('modalStartDate').value,
+                    endDate: document.getElementById('modalEndDate').value,
+                    current: document.getElementById('modalCurrent').checked
+                };
+                if (editingIndex >= 0) experiences[editingIndex] = item;
+                else experiences.push(item);
+                renderExperiences();
+            } else if (modalType === 'education') {
+                const school = document.getElementById('modalSchool').value.trim();
+                const degree = document.getElementById('modalDegree').value.trim();
+                if (!school || !degree) {
+                    showToast('Please fill in required fields', 'error');
+                    return;
+                }
+                const item = {
+                    id: editingIndex >= 0 ? education[editingIndex].id : Date.now().toString(),
+                    school: school,
+                    degree: degree,
+                    description: document.getElementById('modalEduDesc').value.trim(),
+                    startDate: document.getElementById('modalEduStart').value,
+                    endDate: document.getElementById('modalEduEnd').value
+                };
+                if (editingIndex >= 0) education[editingIndex] = item;
+                else education.push(item);
+                renderEducation();
+            } else if (modalType === 'service') {
+                const title = document.getElementById('modalSvcTitle').value.trim();
+                if (!title) {
+                    showToast('Please enter a service title', 'error');
+                    return;
+                }
+                const item = {
+                    id: editingIndex >= 0 ? services[editingIndex].id : Date.now().toString(),
+                    icon: document.getElementById('modalSvcIcon').value.trim() || 'fa-code',
+                    title: title,
+                    description: document.getElementById('modalSvcDesc').value.trim()
+                };
+                if (editingIndex >= 0) services[editingIndex] = item;
+                else services.push(item);
+                renderServices();
+            } else if (modalType === 'process') {
+                const title = document.getElementById('modalProcTitle').value.trim();
+                if (!title) {
+                    showToast('Please enter a step title', 'error');
+                    return;
+                }
+                const item = {
+                    id: editingIndex >= 0 ? process[editingIndex].id : Date.now().toString(),
+                    icon: document.getElementById('modalProcIcon').value.trim() || 'fa-check',
+                    title: title,
+                    description: document.getElementById('modalProcDesc').value.trim()
+                };
+                if (editingIndex >= 0) process[editingIndex] = item;
+                else process.push(item);
+                renderProcess();
+            } else if (modalType === 'testimonial') {
+                const name = document.getElementById('modalTestName').value.trim();
+                const text = document.getElementById('modalTestText').value.trim();
+                if (!name || !text) {
+                    showToast('Please fill in required fields', 'error');
+                    return;
+                }
+                const item = {
+                    id: editingIndex >= 0 ? testimonials[editingIndex].id : Date.now().toString(),
+                    name: name,
+                    role: document.getElementById('modalTestRole').value.trim(),
+                    text: text,
+                    rating: parseInt(document.getElementById('modalTestRating').value)
+                };
+                if (editingIndex >= 0) testimonials[editingIndex] = item;
+                else testimonials.push(item);
+                renderTestimonials();
+            }
+            closeModal();
+            markChanged();
+            showToast(editingIndex >= 0 ? 'Item updated' : 'Item added', 'success');
+        }
+
+        function editItem(type, index) {
+            openModal(type, index);
+        }
+
+        function deleteItem(type, index) {
+            if (!confirm('Are you sure you want to delete this item?')) return;
+            if (type === 'experience') experiences.splice(index, 1);
+            else if (type === 'education') education.splice(index, 1);
+            else if (type === 'service') services.splice(index, 1);
+            else if (type === 'process') process.splice(index, 1);
+            else if (type === 'testimonial') testimonials.splice(index, 1);
+
+            if (type === 'experience') renderExperiences();
+            else if (type === 'education') renderEducation();
+            else if (type === 'service') renderServices();
+            else if (type === 'process') renderProcess();
+            else if (type === 'testimonial') renderTestimonials();
+
+            markChanged();
+            showToast('Item deleted', 'success');
+        }
+
+        // ===== SAVE & RESET =====
+        async function savePortfolio() {
+            const nameInput = document.getElementById('portfolioName');
+            const titleInput = document.getElementById('portfolioTitle');
+
+            if (!validateField(nameInput) || !validateField(titleInput)) {
+                showToast('Please fix validation errors', 'error');
+                return;
+            }
+
+            const data = {
+                name: nameInput.value.trim(),
+                title: titleInput.value.trim(),
+                bio: document.getElementById('portfolioBio').value.trim(),
+                email: document.getElementById('portfolioEmail').value.trim(),
+                phone: document.getElementById('portfolioPhone').value.trim(),
+                location: document.getElementById('portfolioLocation').value.trim(),
+                skills: currentSkills,
+                social: {
+                    github: document.getElementById('socialGithub').value.trim(),
+                    linkedin: document.getElementById('socialLinkedin').value.trim(),
+                    twitter: document.getElementById('socialTwitter').value.trim(),
+                    portfolio: document.getElementById('socialPortfolio').value.trim(),
+                    dribbble: document.getElementById('socialDribbble').value.trim()
+                },
+                experiences: experiences,
+                education: education,
+                services: services,
+                process: process,
+                testimonials: testimonials,
+                theme: currentTheme,
+                seo: {
+                    title: document.getElementById('seoTitle').value.trim(),
+                    description: document.getElementById('seoDescription').value.trim(),
+                    keywords: document.getElementById('seoKeywords').value.trim()
+                }
+            };
+
+            // Preserve the existing photo unless the admin picked a new one or
+            // explicitly removed it.
+            data.photo = portfolioData.photo || '';
+
+            try {
+                const saveBtn = document.getElementById('saveBtn');
+                saveBtn.disabled = true;
+
+                if (selectedPhotoFile) {
+                    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading photo...';
+                    data.photo = await DB.uploadImage(selectedPhotoFile, 'portfolio');
+                } else if (photoRemoved) {
+                    data.photo = '';
+                }
+
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+                if (typeof DB !== 'undefined' && DB.updatePortfolio) {
+                    await DB.updatePortfolio(data);
+                }
+
+                portfolioData = data;
+                selectedPhotoFile = null;
+                photoRemoved = false;
+                hasChanges = false;
+                updateAutoSaveIndicator('saved');
+                showToast('Portfolio saved successfully!', 'success');
+
+                if (typeof DB !== 'undefined' && DB.addLog) {
+                    await DB.addLog({ type: 'update', title: 'Portfolio Updated', description: 'Portfolio information was updated', time: 'Just now' });
+                }
+            } catch (error) {
+                console.error('Error saving portfolio:', error);
+                showToast('Error saving portfolio', 'error');
+            } finally {
+                const saveBtn = document.getElementById('saveBtn');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+            }
+        }
+
+        function resetPortfolio() {
+            if (!confirm('Reset all changes to default values?')) return;
+            portfolioData = JSON.parse(JSON.stringify(defaultPortfolio));
+            experiences = JSON.parse(JSON.stringify(defaultExperiences));
+            education = JSON.parse(JSON.stringify(defaultEducation));
+            services = JSON.parse(JSON.stringify(defaultServices));
+            process = JSON.parse(JSON.stringify(defaultProcess));
+            testimonials = JSON.parse(JSON.stringify(defaultTestimonials));
+            selectedPhotoFile = null;
+            fillForm();
+            renderAll();
+            updatePreview();
+            selectTheme('blue');
+            removePhoto();
+            showToast('Portfolio reset to defaults', 'info');
+        }
+
+        function previewPortfolio() {
+            window.open('index.html', '_blank');
+        }
+
+        // ===== AUTO-SAVE =====
+        function setupAutoSave() {
+            const inputs = document.querySelectorAll('.form-input, .form-input');
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    markChanged();
+                });
+            });
+        }
+
+        function markChanged() {
+            hasChanges = true;
+            updateAutoSaveIndicator('unsaved');
+        }
+
+        function updateAutoSaveIndicator(state) {
+            const indicator = document.getElementById('autosaveIndicator');
+            if (state === 'saving') {
+                indicator.className = 'autosave-indicator saving';
+                indicator.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Saving...</span>';
+            } else if (state === 'saved') {
+                indicator.className = 'autosave-indicator saved';
+                indicator.innerHTML = '<i class="fas fa-check-circle"></i><span>All changes saved</span>';
+            } else {
+                indicator.className = 'autosave-indicator';
+                indicator.innerHTML = '<i class="fas fa-pen"></i><span>Unsaved changes</span>';
+            }
+        }
+
+        // ===== CHARACTER COUNTERS =====
+        function setupCharCounters() {
+            const bioInput = document.getElementById('portfolioBio');
+            const bioCount = document.getElementById('bioCount');
+            bioInput.addEventListener('input', () => {
+                bioCount.textContent = bioInput.value.length;
+                if (bioInput.value.length > 500) {
+                    bioInput.value = bioInput.value.substring(0, 500);
+                    bioCount.textContent = 500;
+                }
+            });
+
+            const seoTitle = document.getElementById('seoTitle');
+            const seoTitleCount = document.getElementById('seoTitleCount');
+            seoTitle.addEventListener('input', () => {
+                seoTitleCount.textContent = seoTitle.value.length;
+            });
+
+            const seoDesc = document.getElementById('seoDescription');
+            const seoDescCount = document.getElementById('seoDescCount');
+            seoDesc.addEventListener('input', () => {
+                seoDescCount.textContent = seoDesc.value.length;
+            });
+        }
+
+        // ===== TOAST =====
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = '<i class="fas ' + icons[type] + '"></i><span>' + escapeHtml(message) + '</span>';
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ===== LOGOUT =====
+        function logoutAdmin() {
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().signOut().then(() => {
+                    window.location.href = 'admin-login.html';
+                });
+            } else {
+                window.location.href = 'admin-login.html';
+            }
+        }
+
+        // Warn before leaving with unsaved changes
+        window.addEventListener('beforeunload', (e) => {
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>

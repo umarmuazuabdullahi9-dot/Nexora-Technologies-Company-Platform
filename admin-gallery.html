@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Gallery | Admin Panel</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .content-area { padding: 32px; }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: var(--transition);
+        }
+        .stat-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .stat-icon.blue { background: rgba(59,130,246,0.1); color: #3b82f6; }
+        .stat-icon.green { background: rgba(34,197,94,0.1); color: #22c55e; }
+        .stat-icon.orange { background: rgba(249,115,22,0.1); color: #f97316; }
+        .stat-icon.purple { background: rgba(168,85,247,0.1); color: #a855f7; }
+        .stat-info h4 { font-size: 1.4rem; font-weight: 700; margin-bottom: 2px; }
+        .stat-info p { font-size: 0.85rem; color: var(--text-secondary); }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 250px;
+            max-width: 400px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .search-box .search-clear {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 4px;
+            display: none;
+        }
+        .search-box .search-clear:hover { color: var(--danger-color); }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .filter-select {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .filter-select:focus { outline: none; border-color: var(--primary-color); }
+
+        .view-toggle {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 4px;
+        }
+        .view-btn {
+            padding: 8px 12px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: calc(var(--radius) - 2px);
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        .view-btn:hover { color: var(--text-primary); }
+        .view-btn.active { background: var(--primary-color); color: white; }
+
+        /* Bulk Bar */
+        .bulk-bar {
+            display: none;
+            gap: 12px;
+            padding: 12px 20px;
+            background: rgba(37,99,235,0.08);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .bulk-bar.active { display: flex; }
+        .bulk-bar-info { font-size: 0.9rem; font-weight: 500; color: var(--text-primary); }
+        .bulk-bar-actions { display: flex; gap: 8px; }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 3px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 48px 32px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 32px;
+            background: var(--bg-card);
+            position: relative;
+            overflow: hidden;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.05);
+        }
+        .upload-zone i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 16px;
+            transition: var(--transition);
+        }
+        .upload-zone:hover i { transform: scale(1.1); }
+        .upload-zone h3 { margin-bottom: 8px; }
+        .upload-zone p { color: var(--text-secondary); margin-top: 8px; }
+        .upload-zone .upload-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        /* Category Filters */
+        .gallery-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 20px;
+            border-radius: var(--radius-full);
+            border: 1.5px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        .filter-btn.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border-color: transparent;
+        }
+        .filter-btn .filter-count {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        /* Gallery Grid */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .gallery-grid.masonry {
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            grid-auto-rows: 10px;
+        }
+        .gallery-item {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: relative;
+            cursor: pointer;
+        }
+        .gallery-item:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+            border-color: var(--primary-color);
+        }
+        .gallery-item.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.2);
+        }
+        .gallery-item .item-checkbox {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .gallery-item:hover .item-checkbox,
+        .gallery-item.selected .item-checkbox { opacity: 1; }
+        .gallery-item .item-checkbox input {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            transition: var(--transition);
+            display: block;
+        }
+        .gallery-item:hover img { transform: scale(1.08); }
+        .gallery-item .item-info {
+            padding: 16px;
+            position: relative;
+        }
+        .gallery-item .item-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .gallery-item .item-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .gallery-item .item-category {
+            padding: 2px 10px;
+            background: var(--primary-glow);
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+        .gallery-item .item-size { font-size: 0.75rem; }
+
+        .gallery-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.85) 100%);
+            opacity: 0;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            pointer-events: none;
+        }
+        .gallery-item:hover .gallery-overlay { opacity: 1; }
+        .gallery-overlay .overlay-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+        .gallery-overlay .overlay-category {
+            font-size: 0.85rem;
+            color: var(--primary-light);
+        }
+
+        .gallery-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .gallery-item:hover .gallery-actions { opacity: 1; }
+        .gallery-action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            backdrop-filter: blur(4px);
+        }
+        .gallery-action-btn:hover {
+            background: var(--primary-color);
+            transform: scale(1.1);
+        }
+        .gallery-action-btn.copy:hover { background: #3b82f6; }
+        .gallery-action-btn.download:hover { background: #22c55e; }
+        .gallery-action-btn.delete:hover { background: #ef4444; }
+
+        /* List View */
+        .list-view {
+            display: none;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .list-view.active { display: block; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            background: var(--bg-body);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+        .data-table tbody tr { transition: var(--transition); cursor: pointer; }
+        .data-table tbody tr:hover { background: rgba(37,99,235,0.03); }
+        .data-table tbody tr.selected { background: rgba(37,99,235,0.06); }
+        .list-thumb {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius);
+            object-fit: cover;
+        }
+        .list-title { font-weight: 700; margin-bottom: 2px; }
+        .list-meta { font-size: 0.8rem; color: var(--text-secondary); }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 24px;
+            color: var(--text-secondary);
+        }
+        .empty-state i { font-size: 4rem; margin-bottom: 24px; opacity: 0.5; }
+        .empty-state h3 { margin-bottom: 12px; color: var(--text-primary); }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .lightbox.active {
+            display: flex;
+            opacity: 1;
+        }
+        .lightbox-container {
+            position: relative;
+            max-width: 90%;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .lightbox img {
+            max-width: 100%;
+            max-height: 75vh;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+        .lightbox-close {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            backdrop-filter: blur(4px);
+        }
+        .lightbox-close:hover { background: var(--danger-color); }
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
+            backdrop-filter: blur(4px);
+        }
+        .lightbox-nav:hover { background: var(--primary-color); }
+        .lightbox-prev { left: -70px; }
+        .lightbox-next { right: -70px; }
+        .lightbox-toolbar {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: var(--radius-full);
+            backdrop-filter: blur(4px);
+        }
+        .lightbox-toolbar button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            transition: var(--transition);
+        }
+        .lightbox-toolbar button:hover { background: rgba(255,255,255,0.2); }
+        .lightbox-info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            color: white;
+            text-align: center;
+            backdrop-filter: blur(4px);
+        }
+        .lightbox-counter {
+            position: absolute;
+            top: -50px;
+            left: 0;
+            color: white;
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Edit Modal */
+        .edit-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 2500;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .edit-modal-overlay.active { display: flex; }
+        .edit-modal {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .edit-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .edit-modal-header h3 { margin: 0; font-size: 1.2rem; }
+        .edit-modal-body { padding: 24px; }
+        .edit-modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .edit-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+        }
+
+        /* Loading */
+        .loading-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            color: var(--text-secondary);
+        }
+        .loading-row i { font-size: 1.5rem; margin-right: 12px; animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content-area { padding: 20px 16px; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .search-box { max-width: none; }
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .gallery-item img { height: 160px; }
+            .lightbox-prev { left: 10px; }
+            .lightbox-next { right: 10px; }
+            .lightbox-nav { width: 40px; height: 40px; font-size: 1rem; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* Hide protected content until Firebase confirms the admin is logged in */
+        body.auth-pending .sidebar,
+        body.auth-pending .main-content { visibility: hidden; }
+        #authGate {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary, #0f172a);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary, #94a3b8);
+            font-size: 2rem;
+        }
+        body:not(.auth-pending) #authGate { display: none; }
+    </style>
+</head>
+<body class="auth-pending">
+    <div id="authGate"><i class="fas fa-spinner fa-spin"></i></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">Nexora Admin</div></div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar" id="sidebarAvatar">A</div>
+            <div><div style="font-weight:700;font-size:0.95rem;" id="adminName">Admin</div><div style="font-size:0.8rem;color:var(--text-secondary);">Super Admin</div></div>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="admin-dashboard.html"><span class="sidebar-menu-icon">📊</span> Dashboard</a></li>
+            <li><a href="admin-projects.html"><span class="sidebar-menu-icon">📁</span> Projects</a></li>
+            <li><a href="admin-messages.html"><span class="sidebar-menu-icon">✉️</span> Messages</a></li>
+            <li><a href="admin-users.html"><span class="sidebar-menu-icon">👥</span> Users</a></li>
+            <li><a href="admin-portfolio.html"><span class="sidebar-menu-icon">🎨</span> Portfolio</a></li>
+            <li><a href="admin-blog.html"><span class="sidebar-menu-icon">📝</span> Blog Posts</a></li>
+            <li><a href="admin-gallery.html" class="active"><span class="sidebar-menu-icon">🖼️</span> Gallery</a></li>
+            <li><a href="admin-social-media.html"><span class="sidebar-menu-icon">🔗</span> Social Media</a></li>
+            <li><a href="admin-storages.html"><span class="sidebar-menu-icon">💾</span> Storage (128GB)</a></li>
+            <li><a href="admin-analytics.html"><span class="sidebar-menu-icon">📈</span> Analytics</a></li>
+            <li><a href="admin-logs.html"><span class="sidebar-menu-icon">📋</span> Activity Logs</a></li>
+            <li><a href="admin-settings.html"><span class="sidebar-menu-icon">⚙️</span> Settings</a></li>
+        </ul>
+        <div style="padding: 16px; border-top: 1px solid var(--border-color);">
+            <button onclick="logoutAdmin()" class="btn btn-danger" style="width: 100%;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+                <h1 style="font-size:1.25rem;">Gallery</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="sidebar-user-avatar" style="width:36px;height:36px;font-size:0.9rem;" id="headerAvatar">A</div>
+                    <span style="font-weight:600;" id="headerAdminName">Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="page-header">
+                <div>
+                    <h1>Photo Gallery</h1>
+                    <p style="color:var(--text-secondary);">Manage your portfolio gallery images</p>
+                </div>
+                <div style="display:flex;gap:12px;">
+                    <button class="btn btn-secondary" onclick="downloadSelected()" id="downloadBtn" style="display:none;">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                    <button class="btn btn-primary" onclick="document.getElementById('galleryFileInput').click()">
+                        <i class="fas fa-plus"></i> Add Photos
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="fas fa-images"></i></div>
+                    <div class="stat-info">
+                        <h4 id="statTotal">0</h4>
+                        <p>Total Photos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="fas fa-folder"></i></div>
+                    <div class="stat-info">
+                        <h4 id="statCategories">0</h4>
+                        <p>Categories</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange"><i class="fas fa-hdd"></i></div>
+                    <div class="stat-info">
+                        <h4 id="statStorage">0 MB</h4>
+                        <p>Storage Used</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="fas fa-eye"></i></div>
+                    <div class="stat-info">
+                        <h4 id="statViews">0</h4>
+                        <p>Total Views</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Zone -->
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('galleryFileInput').click()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Drop photos here or click to upload</h3>
+                <p>Supports: JPG, PNG, GIF, WebP (Max 10MB each)</p>
+                <div class="upload-progress" id="uploadProgress"></div>
+                <input type="file" id="galleryFileInput" multiple accept="image/*" style="display:none;" onchange="handleGalleryUpload(this)">
+            </div>
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search photos..." oninput="handleSearch()">
+                    <button class="search-clear" id="searchClear" onclick="clearSearch()"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="filter-group">
+                    <select class="filter-select" id="sortFilter" onchange="sortGallery()">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="name">Name A-Z</option>
+                        <option value="size">Largest First</option>
+                    </select>
+                </div>
+                <div class="view-toggle">
+                    <button class="view-btn active" onclick="setView('grid')" title="Grid View"><i class="fas fa-th-large"></i></button>
+                    <button class="view-btn" onclick="setView('list')" title="List View"><i class="fas fa-list"></i></button>
+                </div>
+            </div>
+
+            <!-- Bulk Actions Bar -->
+            <div class="bulk-bar" id="bulkBar">
+                <div class="bulk-bar-info">
+                    <i class="fas fa-check-square" style="margin-right:8px;color:var(--primary-color);"></i>
+                    <span id="bulkCount">0</span> photo(s) selected
+                </div>
+                <div class="bulk-bar-actions">
+                    <button class="btn btn-secondary" onclick="bulkDownload()"><i class="fas fa-download"></i> Download</button>
+                    <button class="btn btn-secondary" onclick="bulkCopyLinks()"><i class="fas fa-link"></i> Copy Links</button>
+                    <button class="btn btn-danger" onclick="bulkDelete()"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            </div>
+
+            <!-- Category Filters -->
+            <div class="gallery-filters" id="categoryFilters">
+                <button class="filter-btn active" onclick="filterGallery('all')">
+                    <i class="fas fa-th"></i> All <span class="filter-count" id="countAll">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterGallery('projects')">
+                    <i class="fas fa-code"></i> Projects <span class="filter-count" id="countProjects">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterGallery('events')">
+                    <i class="fas fa-calendar"></i> Events <span class="filter-count" id="countEvents">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterGallery('team')">
+                    <i class="fas fa-users"></i> Team <span class="filter-count" id="countTeam">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterGallery('other')">
+                    <i class="fas fa-ellipsis-h"></i> Other <span class="filter-count" id="countOther">0</span>
+                </button>
+            </div>
+
+            <!-- Grid View -->
+            <div class="gallery-grid" id="galleryGrid"></div>
+
+            <!-- List View -->
+            <div class="list-view" id="listView">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                            <th style="width:80px;">Preview</th>
+                            <th>Details</th>
+                            <th>Category</th>
+                            <th>Size</th>
+                            <th>Date</th>
+                            <th style="width:140px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <i class="fas fa-images"></i>
+                <h3>No photos found</h3>
+                <p>Upload photos to get started</p>
+                <button class="btn btn-primary" onclick="document.getElementById('galleryFileInput').click()" style="margin-top:16px;">
+                    <i class="fas fa-plus"></i> Add Photos
+                </button>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </main>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-container">
+            <div class="lightbox-counter" id="lightboxCounter">1 / 10</div>
+            <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+            <button class="lightbox-nav lightbox-prev" onclick="navigateLightbox(-1)"><i class="fas fa-chevron-left"></i></button>
+            <button class="lightbox-nav lightbox-next" onclick="navigateLightbox(1)"><i class="fas fa-chevron-right"></i></button>
+            <img src="" alt="Gallery" id="lightboxImage">
+            <div class="lightbox-toolbar">
+                <button onclick="lightboxCopyLink()" title="Copy Link"><i class="fas fa-link"></i></button>
+                <button onclick="lightboxDownload()" title="Download"><i class="fas fa-download"></i></button>
+                <button onclick="lightboxZoomIn()" title="Zoom In"><i class="fas fa-search-plus"></i></button>
+                <button onclick="lightboxZoomOut()" title="Zoom Out"><i class="fas fa-search-minus"></i></button>
+                <button onclick="lightboxRotate()" title="Rotate"><i class="fas fa-redo"></i></button>
+                <button onclick="lightboxDelete()" title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="lightbox-info" id="lightboxInfo"></div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="edit-modal-overlay" id="editModal" onclick="closeEditModal(event)">
+        <div class="edit-modal" onclick="event.stopPropagation()">
+            <div class="edit-modal-header">
+                <h3><i class="fas fa-edit" style="margin-right:8px;color:var(--primary-color);"></i>Edit Photo</h3>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="edit-modal-body">
+                <img src="" alt="Preview" class="edit-preview" id="editPreview">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" class="form-input" id="editTitle" placeholder="Photo title...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-input" id="editCategory">
+                        <option value="projects">Projects</option>
+                        <option value="events">Events</option>
+                        <option value="team">Team</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" id="editDescription" rows="2" placeholder="Optional description..."></textarea>
+                </div>
+            </div>
+            <div class="edit-modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveEdit()"><i class="fas fa-save"></i> Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="firebase-common.js"></script>
+    <script>
+
+        let allGallery = [];
+        let filteredItems = [];
+        let currentFilter = 'all';
+        let currentView = 'grid';
+        let currentPage = 1;
+        const itemsPerPage = 12;
+        let selectedIds = new Set();
+        let searchQuery = '';
+        let currentLightboxIndex = 0;
+        let lightboxZoom = 1;
+        let lightboxRotation = 0;
+        let editingId = null;
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            var overlay = document.getElementById('mobileNavOverlay');
+            if (overlay) overlay.classList.toggle('active');
+        }
+
+        // Drag and drop
+        const uploadZone = document.getElementById('uploadZone');
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
+        });
+
+        function handleGalleryUpload(input) {
+            if (input.files.length > 0) handleFiles(input.files);
+        }
+
+        async function handleFiles(files) {
+            const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            if (validFiles.length === 0) { showToast('No valid image files selected', 'error'); return; }
+
+            showToast('Uploading ' + validFiles.length + ' photo(s)...', 'info');
+            const progressBar = document.getElementById('uploadProgress');
+            let processed = 0;
+
+            for (const file of validFiles) {
+                if (file.size > 10 * 1024 * 1024) {
+                    showToast('Skipped ' + file.name + ': exceeds 10MB', 'warning');
+                    continue;
+                }
+                try {
+                    // Real upload to Firebase Storage — data holds a real download URL,
+                    // not a base64 blob stuffed into the database document.
+                    const url = await DB.uploadImage(file, 'gallery', (pct) => {
+                        const perFileShare = 100 / validFiles.length;
+                        progressBar.style.width = ((processed * perFileShare) + (pct / 100 * perFileShare)) + '%';
+                    });
+
+                    const item = {
+                        name: file.name,
+                        data: url,
+                        category: 'other',
+                        size: file.size,
+                        title: file.name.split('.')[0],
+                        description: '',
+                        views: 0,
+                        createdAt: new Date().toISOString()
+                    };
+                    await DB.addGalleryItem(item);
+                    processed++;
+                    if (processed === validFiles.length) {
+                        setTimeout(() => { progressBar.style.width = '0%'; }, 500);
+                        showToast(processed + ' photos uploaded successfully', 'success');
+                        loadGallery();
+                    }
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    showToast('Failed: ' + file.name, 'error');
+                }
+            }
+        }
+
+        async function loadGallery() {
+            try {
+                allGallery = await DB.getGallery();
+                updateStats();
+                filterGallery(currentFilter);
+            } catch (error) { showToast('Error loading gallery', 'error'); }
+        }
+
+        function updateStats() {
+            const total = allGallery.length;
+            const categories = new Set(allGallery.map(i => i.category).filter(Boolean)).size;
+            const storage = allGallery.reduce((sum, i) => sum + (i.size || 0), 0);
+            const views = allGallery.reduce((sum, i) => sum + (i.views || 0), 0);
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statCategories').textContent = categories;
+            document.getElementById('statStorage').textContent = formatFileSize(storage);
+            document.getElementById('statViews').textContent = views.toLocaleString();
+
+            // Update filter counts
+            document.getElementById('countAll').textContent = total;
+            document.getElementById('countProjects').textContent = allGallery.filter(i => i.category === 'projects').length;
+            document.getElementById('countEvents').textContent = allGallery.filter(i => i.category === 'events').length;
+            document.getElementById('countTeam').textContent = allGallery.filter(i => i.category === 'team').length;
+            document.getElementById('countOther').textContent = allGallery.filter(i => i.category === 'other').length;
+        }
+
+        function handleSearch() {
+            const input = document.getElementById('searchInput');
+            searchQuery = input.value.toLowerCase().trim();
+            document.getElementById('searchClear').style.display = searchQuery ? 'block' : 'none';
+            currentPage = 1;
+            filterGallery(currentFilter);
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            searchQuery = '';
+            document.getElementById('searchClear').style.display = 'none';
+            currentPage = 1;
+            filterGallery(currentFilter);
+        }
+
+        function sortGallery() {
+            const sortValue = document.getElementById('sortFilter').value;
+            switch(sortValue) {
+                case 'newest': filteredItems.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)); break;
+                case 'oldest': filteredItems.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)); break;
+                case 'name': filteredItems.sort((a, b) => (a.title || '').localeCompare(b.title || '')); break;
+                case 'size': filteredItems.sort((a, b) => (b.size || 0) - (a.size || 0)); break;
+            }
+            renderGallery();
+        }
+
+        function setView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.view-btn').classList.add('active');
+            if (view === 'grid') {
+                document.getElementById('galleryGrid').style.display = 'grid';
+                document.getElementById('listView').classList.remove('active');
+            } else {
+                document.getElementById('galleryGrid').style.display = 'none';
+                document.getElementById('listView').classList.add('active');
+            }
+            renderGallery();
+        }
+
+        function filterGallery(category) {
+            currentFilter = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('onclick') === `filterGallery('${category}')`);
+            });
+
+            filteredItems = category === 'all' ? [...allGallery] : allGallery.filter(item => item.category === category);
+
+            if (searchQuery) {
+                filteredItems = filteredItems.filter(item => 
+                    (item.title && item.title.toLowerCase().includes(searchQuery)) ||
+                    (item.name && item.name.toLowerCase().includes(searchQuery)) ||
+                    (item.description && item.description.toLowerCase().includes(searchQuery))
+                );
+            }
+
+            sortGallery();
+        }
+
+        function renderGallery() {
+            const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+            const start = (currentPage - 1) * itemsPerPage;
+            const pageItems = filteredItems.slice(start, start + itemsPerPage);
+
+            if (filteredItems.length === 0) {
+                document.getElementById('galleryGrid').innerHTML = '';
+                document.getElementById('listBody').innerHTML = '';
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            document.getElementById('emptyState').style.display = 'none';
+
+            // Grid View
+            document.getElementById('galleryGrid').innerHTML = pageItems.map((item, index) => `
+                <div class="gallery-item ${selectedIds.has(item.id) ? 'selected' : ''}" data-id="${item.id}">
+                    <div class="item-checkbox" onclick="event.stopPropagation(); toggleSelect('${item.id}')">
+                        <input type="checkbox" ${selectedIds.has(item.id) ? 'checked' : ''}>
+                    </div>
+                    <img src="${item.data}" alt="${escapeHtml(item.title || item.name)}" loading="lazy" onclick="openLightbox(${start + index})">
+                    <div class="gallery-overlay">
+                        <div class="overlay-title">${escapeHtml(item.title || item.name)}</div>
+                        <div class="overlay-category">${item.category || 'Other'}</div>
+                    </div>
+                    <div class="gallery-actions">
+                        <button class="gallery-action-btn copy" onclick="event.stopPropagation(); copyImageLink('${item.id}')" title="Copy Link"><i class="fas fa-link"></i></button>
+                        <button class="gallery-action-btn download" onclick="event.stopPropagation(); downloadImage('${item.id}')" title="Download"><i class="fas fa-download"></i></button>
+                        <button class="gallery-action-btn" onclick="event.stopPropagation(); openEditModal('${item.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                        <button class="gallery-action-btn delete" onclick="event.stopPropagation(); deleteGalleryItem('${item.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="item-info">
+                        <div class="item-title">${escapeHtml(item.title || item.name)}</div>
+                        <div class="item-meta">
+                            <span class="item-category">${item.category || 'Other'}</span>
+                            <span class="item-size">${formatFileSize(item.size)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // List View
+            document.getElementById('listBody').innerHTML = pageItems.map(item => `
+                <tr class="${selectedIds.has(item.id) ? 'selected' : ''}" data-id="${item.id}">
+                    <td><input type="checkbox" ${selectedIds.has(item.id) ? 'checked' : ''} onchange="toggleSelect('${item.id}')"></td>
+                    <td><img src="${item.data}" alt="${escapeHtml(item.title || item.name)}" class="list-thumb" loading="lazy"></td>
+                    <td>
+                        <div class="list-title">${escapeHtml(item.title || item.name)}</div>
+                        <div class="list-meta">${escapeHtml(truncateText(item.description, 50))}</div>
+                    </td>
+                    <td><span class="item-category">${item.category || 'Other'}</span></td>
+                    <td>${formatFileSize(item.size)}</td>
+                    <td>${formatDate(item.createdAt)}</td>
+                    <td>
+                        <div class="blog-admin-actions">
+                            <button class="action-btn preview" onclick="openLightboxById('${item.id}')" title="View"><i class="fas fa-eye"></i></button>
+                            <button class="action-btn edit" onclick="openEditModal('${item.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button class="action-btn delete" onclick="deleteGalleryItem('${item.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            renderPagination(totalPages);
+            updateBulkBar();
+        }
+
+        function renderPagination(totalPages) {
+            if (totalPages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+            let html = `<button class="pagination-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                } else if (i === currentPage - 2 || i === currentPage + 2) html += `<span class="pagination-info">...</span>`;
+            }
+            html += `<button class="pagination-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button><span class="pagination-info">Page ${currentPage} of ${totalPages}</span>`;
+            document.getElementById('pagination').innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderGallery();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleSelect(id) {
+            if (selectedIds.has(id)) selectedIds.delete(id);
+            else selectedIds.add(id);
+            renderGallery();
+        }
+
+        function toggleSelectAll() {
+            const pageIds = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(i => i.id);
+            const allSelected = pageIds.every(id => selectedIds.has(id));
+            if (allSelected) pageIds.forEach(id => selectedIds.delete(id));
+            else pageIds.forEach(id => selectedIds.add(id));
+            document.getElementById('selectAll').checked = !allSelected;
+            renderGallery();
+        }
+
+        function updateBulkBar() {
+            const bar = document.getElementById('bulkBar');
+            const downloadBtn = document.getElementById('downloadBtn');
+            if (selectedIds.size > 0) {
+                bar.classList.add('active');
+                document.getElementById('bulkCount').textContent = selectedIds.size;
+                downloadBtn.style.display = 'inline-flex';
+            } else {
+                bar.classList.remove('active');
+                downloadBtn.style.display = 'none';
+            }
+        }
+
+        async function bulkDelete() {
+            if (!confirm('Delete ' + selectedIds.size + ' photos? This cannot be undone!')) return;
+            for (const id of selectedIds) await DB.deleteGalleryItem(id);
+            const count = selectedIds.size; selectedIds.clear();
+            showToast(count + ' photos deleted', 'success');
+            loadGallery();
+        }
+
+        function bulkDownload() {
+            selectedIds.forEach(id => {
+                const item = allGallery.find(i => i.id === id);
+                if (item) downloadImageByUrl(item.data, item.name || 'image.jpg');
+            });
+            showToast('Downloading ' + selectedIds.size + ' photos...', 'success');
+        }
+
+        function bulkCopyLinks() {
+            const links = Array.from(selectedIds).map(id => {
+                const item = allGallery.find(i => i.id === id);
+                return item ? item.data : '';
+            }).filter(Boolean).join('\n');
+            navigator.clipboard.writeText(links).then(() => showToast('Links copied to clipboard', 'success'));
+        }
+
+        function downloadSelected() {
+            bulkDownload();
+        }
+
+        // Lightbox
+        function openLightbox(index) {
+            currentLightboxIndex = index;
+            lightboxZoom = 1;
+            lightboxRotation = 0;
+            updateLightbox();
+            document.getElementById('lightbox').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function openLightboxById(id) {
+            const index = filteredItems.findIndex(i => i.id === id);
+            if (index !== -1) openLightbox(index);
+        }
+
+        function updateLightbox() {
+            const item = filteredItems[currentLightboxIndex];
+            if (!item) return;
+            document.getElementById('lightboxImage').src = item.data;
+            document.getElementById('lightboxImage').style.transform = 'scale(' + lightboxZoom + ') rotate(' + lightboxRotation + 'deg)';
+            document.getElementById('lightboxCounter').textContent = (currentLightboxIndex + 1) + ' / ' + filteredItems.length;
+            document.getElementById('lightboxInfo').innerHTML = '<div style="font-weight:700;">' + (item.title || item.name) + '</div><div style="font-size:0.85rem;opacity:0.8;">' + (item.category || 'Other') + ' | ' + formatFileSize(item.size) + '</div>';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('active');
+            document.body.style.overflow = '';
+            lightboxZoom = 1;
+            lightboxRotation = 0;
+        }
+
+        function navigateLightbox(direction) {
+            currentLightboxIndex += direction;
+            if (currentLightboxIndex < 0) currentLightboxIndex = filteredItems.length - 1;
+            if (currentLightboxIndex >= filteredItems.length) currentLightboxIndex = 0;
+            lightboxZoom = 1;
+            lightboxRotation = 0;
+            updateLightbox();
+        }
+
+        function lightboxZoomIn() { lightboxZoom = Math.min(lightboxZoom + 0.25, 3); updateLightboxTransform(); }
+        function lightboxZoomOut() { lightboxZoom = Math.max(lightboxZoom - 0.25, 0.5); updateLightboxTransform(); }
+        function lightboxRotate() { lightboxRotation += 90; updateLightboxTransform(); }
+        function updateLightboxTransform() {
+            document.getElementById('lightboxImage').style.transform = 'scale(' + lightboxZoom + ') rotate(' + lightboxRotation + 'deg)';
+        }
+        function lightboxCopyLink() {
+            const item = filteredItems[currentLightboxIndex];
+            if (item) navigator.clipboard.writeText(item.data).then(() => showToast('Link copied', 'success'));
+        }
+        function lightboxDownload() {
+            const item = filteredItems[currentLightboxIndex];
+            if (item) downloadImageByUrl(item.data, item.name || 'image.jpg');
+        }
+        function lightboxDelete() {
+            const item = filteredItems[currentLightboxIndex];
+            if (item && confirm('Delete this photo?')) {
+                deleteGalleryItem(item.id);
+                closeLightbox();
+            }
+        }
+
+        // Edit Modal
+        function openEditModal(id) {
+            const item = allGallery.find(i => i.id === id);
+            if (!item) return;
+            editingId = id;
+            document.getElementById('editPreview').src = item.data;
+            document.getElementById('editTitle').value = item.title || item.name || '';
+            document.getElementById('editCategory').value = item.category || 'other';
+            document.getElementById('editDescription').value = item.description || '';
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal(e) {
+            if (!e || e.target === document.getElementById('editModal') || e.target.closest('.modal-close')) {
+                document.getElementById('editModal').classList.remove('active');
+                editingId = null;
+            }
+        }
+
+        async function saveEdit() {
+            if (!editingId) return;
+            const updates = {
+                title: document.getElementById('editTitle').value.trim(),
+                category: document.getElementById('editCategory').value,
+                description: document.getElementById('editDescription').value.trim()
+            };
+            try {
+                await DB.updateGalleryItem(editingId, updates);
+                showToast('Photo updated successfully', 'success');
+                closeEditModal();
+                loadGallery();
+            } catch (error) { showToast('Error updating photo', 'error'); }
+        }
+
+        async function deleteGalleryItem(id) {
+            if (!confirm('Delete this photo?')) return;
+            try {
+                await DB.deleteGalleryItem(id);
+                showToast('Photo deleted', 'success');
+                loadGallery();
+            } catch (error) { showToast('Error deleting photo', 'error'); }
+        }
+
+        function copyImageLink(id) {
+            const item = allGallery.find(i => i.id === id);
+            if (item) navigator.clipboard.writeText(item.data).then(() => showToast('Link copied to clipboard', 'success'));
+        }
+
+        function downloadImage(id) {
+            const item = allGallery.find(i => i.id === id);
+            if (item) downloadImageByUrl(item.data, item.name || 'image.jpg');
+        }
+
+        async function downloadImageByUrl(url, filename) {
+            // Cross-origin Firebase Storage URLs ignore the `download` attribute,
+            // so a plain <a download> click just opens the image instead of saving it.
+            // Try a real fetch+blob download first; if the bucket's CORS isn't
+            // configured for it, fall back honestly instead of pretending it worked.
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Fetch failed: ' + response.status);
+                const blob = await response.blob();
+                const objectUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = objectUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+            } catch (error) {
+                console.error('Download fetch failed, falling back to opening image:', error);
+                window.open(url, '_blank');
+                showToast('Opened the image in a new tab — right-click to save it', 'info');
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return 'Unknown';
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Unknown';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('lightbox').classList.contains('active')) {
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowLeft') navigateLightbox(-1);
+                if (e.key === 'ArrowRight') navigateLightbox(1);
+                if (e.key === '+' || e.key === '=') lightboxZoomIn();
+                if (e.key === '-') lightboxZoomOut();
+                if (e.key === 'r') lightboxRotate();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await checkAuth(); // redirects to admin-login.html if not signed in
+            if (!user) return;
+
+            const adminName = getAdminEmail().split('@')[0];
+            document.getElementById('adminName').textContent = adminName;
+            document.getElementById('headerAdminName').textContent = adminName;
+            document.getElementById('sidebarAvatar').textContent = adminName.charAt(0).toUpperCase();
+            document.getElementById('headerAvatar').textContent = adminName.charAt(0).toUpperCase();
+
+            loadGallery();
+            initMobileMenu();
+        });
+    </script>
+
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleSidebar()"></div>
+</body>
+</html>
